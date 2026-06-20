@@ -4,11 +4,11 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { listProducts, listDailySales, listPurchases } from "@/lib/api";
 import { StatCard } from "@/components/StatCard";
-import { EGP, NUM, getWeekDates, todayISO } from "@/lib/format";
+import { EGP, NUM, getWeekDates } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { TrendingDown, TrendingUp, Wallet, ShoppingBag, FileSpreadsheet, Printer } from "lucide-react";
 import { exportToExcel, printElement } from "@/lib/export";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export const Route = createFileRoute("/weekly")({ component: WeeklyPage });
 

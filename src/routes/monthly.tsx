@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { listProducts, listDailySales, listPurchases } from "@/lib/api";
-import { EGP, NUM, monthRange, toISODate } from "@/lib/format";
+import { EGP, NUM, monthRange } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { TrendingDown, TrendingUp, Wallet, ShoppingBag, FileSpreadsheet, Printer } from "lucide-react";
 import { exportToExcel, printElement } from "@/lib/export";

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { listProducts, listDailySales, setDailySale, type DailySale, type Product } from "@/lib/api";
-import { EGP, NUM, WEEK_DAYS_AR, getWeekDates, todayISO } from "@/lib/format";
+import { EGP, NUM, WEEK_DAYS_AR, getWeekDates } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, AlertTriangle, FileSpreadsheet, Printer } from "lucide-react";
 import { toast } from "sonner";
