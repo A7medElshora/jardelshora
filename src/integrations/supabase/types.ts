@@ -14,7 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      daily_sales: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity_sold: number
+          retail_price_snapshot: number
+          sale_date: string
+          updated_at: string
+          wholesale_price_snapshot: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity_sold?: number
+          retail_price_snapshot?: number
+          sale_date: string
+          updated_at?: string
+          wholesale_price_snapshot?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity_sold?: number
+          retail_price_snapshot?: number
+          sale_date?: string
+          updated_at?: string
+          wholesale_price_snapshot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      price_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          id: string
+          new_price: number
+          old_price: number
+          product_id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_price: number
+          old_price: number
+          product_id: string
+          reason?: string | null
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          new_price?: number
+          old_price?: number
+          product_id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string
+          id: string
+          low_stock_threshold: number
+          name: string
+          quantity: number
+          retail_price: number
+          updated_at: string
+          wholesale_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          low_stock_threshold?: number
+          name: string
+          quantity?: number
+          retail_price?: number
+          updated_at?: string
+          wholesale_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          low_stock_threshold?: number
+          name?: string
+          quantity?: number
+          retail_price?: number
+          updated_at?: string
+          wholesale_price?: number
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          purchase_date: string
+          quantity: number
+          supplier: string | null
+          wholesale_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          purchase_date?: string
+          quantity: number
+          supplier?: string | null
+          wholesale_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          purchase_date?: string
+          quantity?: number
+          supplier?: string | null
+          wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
