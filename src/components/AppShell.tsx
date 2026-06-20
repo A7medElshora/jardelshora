@@ -19,7 +19,8 @@ import { useTheme } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const nav = [
+type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const nav: NavItem[] = [
   { to: "/", label: "لوحة التحكم", icon: LayoutDashboard, exact: true },
   { to: "/daily", label: "الجرد اليومي", icon: CalendarDays },
   { to: "/weekly", label: "الجرد الأسبوعي", icon: CalendarRange },
@@ -28,7 +29,7 @@ const nav = [
   { to: "/products", label: "الأصناف", icon: Boxes },
   { to: "/price-history", label: "سجل الأسعار", icon: History },
   { to: "/reports", label: "التقارير", icon: FileBarChart2 },
-] as const;
+];
 
 export function AppShell({ children, title }: { children: ReactNode; title: string }) {
   const { logout } = useAuth();
