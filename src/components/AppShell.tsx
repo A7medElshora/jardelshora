@@ -62,7 +62,7 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
             return (
               <Link
                 key={n.to}
-                to={n.to}
+                to={n.to as never}
                 onClick={() => setOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
