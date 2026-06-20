@@ -74,7 +74,7 @@ function Dashboard() {
           return (
             <Link
               key={t.to}
-              to={t.to as string}
+              to={t.to as never}
               className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-card hover:shadow-elevated transition-all hover:-translate-y-0.5"
             >
               <div className={`absolute inset-x-0 top-0 h-1 ${bg}`} />
