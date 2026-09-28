@@ -126,6 +126,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profit_withdrawals: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          profit_date: string
+          taken_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          profit_date: string
+          taken_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          profit_date?: string
+          taken_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       purchases: {
         Row: {
           created_at: string
