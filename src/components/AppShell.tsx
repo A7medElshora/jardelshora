@@ -27,6 +27,7 @@ const nav: NavItem[] = [
   { to: "/monthly", label: "الجرد الشهري", icon: CalendarCheck2 },
   { to: "/purchases", label: "المضاف (الوارد)", icon: PackagePlus },
   { to: "/products", label: "الأصناف", icon: Boxes },
+  { to: "/profits", label: "الأرباح", icon: FileBarChart2 },
   { to: "/price-history", label: "سجل الأسعار", icon: History },
   { to: "/reports", label: "التقارير", icon: FileBarChart2 },
 ];
