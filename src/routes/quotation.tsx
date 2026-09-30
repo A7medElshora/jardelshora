@@ -42,7 +42,6 @@ function QuotationPage() {
 
   const items = useMemo(() => {
     if (!supplier) return [];
-    const names = new Map((prodQ.data ?? []).map((p) => [p.id, p.name]));
     const latest = new Map<string, { price: number; key: string }>();
     for (const p of purQ.data ?? []) {
       if (p.supplier?.trim() !== supplier) continue;
@@ -50,8 +49,17 @@ function QuotationPage() {
       const cur = latest.get(p.product_id);
       if (!cur || key > cur.key) latest.set(p.product_id, { price: Number(p.wholesale_price), key });
     }
-    return Array.from(latest.entries())
-      .map(([id, v]) => ({ id, name: names.get(id) ?? "صنف محذوف", price: v.price }))
+    // كل الأصناف الموجودة — سعر المورد إن وُجد، وإلا سعر الجملة الحالي
+    return (prodQ.data ?? [])
+      .map((p) => {
+        const sup = latest.get(p.id);
+        return {
+          id: p.id,
+          name: p.name,
+          price: sup ? sup.price : Number(p.wholesale_price),
+          fromSupplier: !!sup,
+        };
+      })
       .sort((a, b) => a.name.localeCompare(b.name, "ar"));
   }, [supplier, purQ.data, prodQ.data]);
 
@@ -93,7 +101,10 @@ function QuotationPage() {
                 return (
                   <div key={i.id} className="rounded-xl border border-border bg-card p-4 shadow-card space-y-3">
                     <div className="font-bold">{i.name}</div>
-                    <div className="text-sm text-muted-foreground">السعر: <span className="text-foreground font-semibold">{EGP(i.price)}</span></div>
+                    <div className="text-sm text-muted-foreground">
+                      السعر: <span className="text-foreground font-semibold">{EGP(i.price)}</span>
+                      {!i.fromSupplier && <span className="block text-[11px] text-warning">لم يُشترَ من هذا المورد — السعر الحالي</span>}
+                    </div>
                     <input
                       type="number" min={0} inputMode="decimal" placeholder="الكمية"
                       value={qty[i.id] ?? ""}
