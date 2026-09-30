@@ -66,6 +66,20 @@ function QuotationPage() {
 
   const total = items.reduce((s, i) => s + (Number(qty[i.id]) || 0) * i.price, 0);
 
+  function shareWhatsApp() {
+    const wanted = items.filter((i) => (Number(qty[i.id]) || 0) > 0);
+    if (wanted.length === 0) {
+      toast.error("اكتب الكمية المطلوبة من الأصناف أولاً");
+      return;
+    }
+    const lines = wanted.map(
+      (i) => `• ${i.name}\nالكمية: ${NUM(Number(qty[i.id]))} — السعر: ${EGP(i.price)} — الإجمالي: ${EGP((Number(qty[i.id]) || 0) * i.price)}`
+    );
+    const wantedTotal = wanted.reduce((s, i) => s + (Number(qty[i.id]) || 0) * i.price, 0);
+    const msg = `*بيان أسعار: ${supplier}*\n\n${lines.join("\n\n")}\n\n*الإجمالي: ${EGP(wantedTotal)}*`;
+    window.open(`https://wa.me/201050815073?text=${encodeURIComponent(msg)}`, "_blank");
+  }
+
   return (
     <AppShell title="بيان أسعار">
       <div className="space-y-6">
@@ -87,6 +101,7 @@ function QuotationPage() {
           </label>
           <Button variant="outline" onClick={() => setQty({})}><RotateCcw className="size-4" />تصفير الكميات</Button>
           <Button onClick={() => window.print()}><Printer className="size-4" />طباعة</Button>
+          <Button onClick={shareWhatsApp} className="bg-success text-success-foreground hover:bg-success/90"><MessageCircle className="size-4" />واتساب</Button>
         </div>
 
         {!supplier ? (
