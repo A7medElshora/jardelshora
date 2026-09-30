@@ -42,7 +42,6 @@ function QuotationPage() {
 
   const items = useMemo(() => {
     if (!supplier) return [];
-    const names = new Map((prodQ.data ?? []).map((p) => [p.id, p.name]));
     const latest = new Map<string, { price: number; key: string }>();
     for (const p of purQ.data ?? []) {
       if (p.supplier?.trim() !== supplier) continue;
@@ -50,8 +49,17 @@ function QuotationPage() {
       const cur = latest.get(p.product_id);
       if (!cur || key > cur.key) latest.set(p.product_id, { price: Number(p.wholesale_price), key });
     }
-    return Array.from(latest.entries())
-      .map(([id, v]) => ({ id, name: names.get(id) ?? "صنف محذوف", price: v.price }))
+    // كل الأصناف الموجودة — سعر المورد إن وُجد، وإلا سعر الجملة الحالي
+    return (prodQ.data ?? [])
+      .map((p) => {
+        const sup = latest.get(p.id);
+        return {
+          id: p.id,
+          name: p.name,
+          price: sup ? sup.price : Number(p.wholesale_price),
+          fromSupplier: !!sup,
+        };
+      })
       .sort((a, b) => a.name.localeCompare(b.name, "ar"));
   }, [supplier, purQ.data, prodQ.data]);
 
