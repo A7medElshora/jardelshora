@@ -101,7 +101,10 @@ function QuotationPage() {
                 return (
                   <div key={i.id} className="rounded-xl border border-border bg-card p-4 shadow-card space-y-3">
                     <div className="font-bold">{i.name}</div>
-                    <div className="text-sm text-muted-foreground">السعر: <span className="text-foreground font-semibold">{EGP(i.price)}</span></div>
+                    <div className="text-sm text-muted-foreground">
+                      السعر: <span className="text-foreground font-semibold">{EGP(i.price)}</span>
+                      {!i.fromSupplier && <span className="block text-[11px] text-warning">لم يُشترَ من هذا المورد — السعر الحالي</span>}
+                    </div>
                     <input
                       type="number" min={0} inputMode="decimal" placeholder="الكمية"
                       value={qty[i.id] ?? ""}
