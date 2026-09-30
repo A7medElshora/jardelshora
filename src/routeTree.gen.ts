@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WeeklyRouteImport } from './routes/weekly'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as QuotationRouteImport } from './routes/quotation'
 import { Route as PurchasesRouteImport } from './routes/purchases'
 import { Route as ProfitsRouteImport } from './routes/profits'
 import { Route as ProductsRouteImport } from './routes/products'
@@ -27,6 +28,11 @@ const WeeklyRoute = WeeklyRouteImport.update({
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuotationRoute = QuotationRouteImport.update({
+  id: '/quotation',
+  path: '/quotation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PurchasesRoute = PurchasesRouteImport.update({
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/products': typeof ProductsRoute
   '/profits': typeof ProfitsRoute
   '/purchases': typeof PurchasesRoute
+  '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
   '/weekly': typeof WeeklyRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/products': typeof ProductsRoute
   '/profits': typeof ProfitsRoute
   '/purchases': typeof PurchasesRoute
+  '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
   '/weekly': typeof WeeklyRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/products': typeof ProductsRoute
   '/profits': typeof ProfitsRoute
   '/purchases': typeof PurchasesRoute
+  '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
   '/weekly': typeof WeeklyRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/profits'
     | '/purchases'
+    | '/quotation'
     | '/reports'
     | '/weekly'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/profits'
     | '/purchases'
+    | '/quotation'
     | '/reports'
     | '/weekly'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/products'
     | '/profits'
     | '/purchases'
+    | '/quotation'
     | '/reports'
     | '/weekly'
   fileRoutesById: FileRoutesById
@@ -143,6 +155,7 @@ export interface RootRouteChildren {
   ProductsRoute: typeof ProductsRoute
   ProfitsRoute: typeof ProfitsRoute
   PurchasesRoute: typeof PurchasesRoute
+  QuotationRoute: typeof QuotationRoute
   ReportsRoute: typeof ReportsRoute
   WeeklyRoute: typeof WeeklyRoute
 }
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/reports'
       fullPath: '/reports'
       preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quotation': {
+      id: '/quotation'
+      path: '/quotation'
+      fullPath: '/quotation'
+      preLoaderRoute: typeof QuotationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/purchases': {
@@ -223,6 +243,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProductsRoute: ProductsRoute,
   ProfitsRoute: ProfitsRoute,
   PurchasesRoute: PurchasesRoute,
+  QuotationRoute: QuotationRoute,
   ReportsRoute: ReportsRoute,
   WeeklyRoute: WeeklyRoute,
 }
