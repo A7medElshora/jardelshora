@@ -16,8 +16,19 @@ function PurchasesPage() {
   const productsQ = useQuery({ queryKey: ["products"], queryFn: listProducts });
   const purchasesQ = useQuery({ queryKey: ["purchases-all"], queryFn: () => listPurchases() });
   const products = productsQ.data ?? [];
-  const purchases = purchasesQ.data ?? [];
+  const allPurchases = purchasesQ.data ?? [];
   const pmap = new Map(products.map((p) => [p.id, p]));
+
+  // فلترة العرض فقط — لا تؤثر على كميات الأصناف أو أي بيانات
+  const [filterFrom, setFilterFrom] = useState("");
+  const [filterTo, setFilterTo] = useState("");
+  const purchases = allPurchases.filter((p) => {
+    if (filterFrom && p.purchase_date < filterFrom) return false;
+    if (filterTo && p.purchase_date > filterTo) return false;
+    return true;
+  });
+  const periodTotal = purchases.reduce((sum, p) => sum + Number(p.quantity) * Number(p.wholesale_price), 0);
+  const periodQty = purchases.reduce((sum, p) => sum + Number(p.quantity), 0);
 
   const [form, setForm] = useState({
     purchase_date: todayISO(),
