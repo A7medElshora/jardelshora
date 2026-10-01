@@ -184,12 +184,35 @@ function PurchasesPage() {
 
         {/* Table */}
         <div className="lg:col-span-2 bg-card border border-border rounded-2xl shadow-card overflow-hidden">
-          <div className="px-5 py-3 border-b border-border flex items-center gap-2 no-print">
+          <div className="px-5 py-3 border-b border-border flex flex-wrap items-center gap-3 no-print">
             <h3 className="font-bold">سجل الوارد</h3>
             <span className="text-xs text-muted-foreground">({purchases.length} سجل)</span>
+            <div className="flex items-end gap-2">
+              <div>
+                <label className="text-[11px] font-bold block mb-0.5">من</label>
+                <input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="h-8 rounded-lg border border-input bg-background px-2 text-xs" />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold block mb-0.5">إلى</label>
+                <input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="h-8 rounded-lg border border-input bg-background px-2 text-xs" />
+              </div>
+              {(filterFrom || filterTo) && (
+                <Button variant="ghost" size="sm" onClick={() => { setFilterFrom(""); setFilterTo(""); }}>إظهار الكل</Button>
+              )}
+            </div>
             <div className="ms-auto flex gap-2">
               <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="size-4 ms-1" />Excel</Button>
               <Button variant="outline" size="sm" onClick={() => printElement(document.getElementById("purch-print"))}><Printer className="size-4 ms-1" />طباعة</Button>
+            </div>
+          </div>
+          <div className="px-5 py-3 border-b border-border flex flex-wrap gap-3">
+            <div className="flex-1 min-w-36 rounded-xl bg-gradient-warning text-white p-3 shadow-card">
+              <div className="text-[11px] opacity-90">إجمالي الوارد {(filterFrom || filterTo) ? "للفترة المحددة" : "(الكل)"}</div>
+              <div className="text-lg font-extrabold">{EGP(periodTotal)}</div>
+            </div>
+            <div className="flex-1 min-w-36 rounded-xl bg-gradient-info text-white p-3 shadow-card">
+              <div className="text-[11px] opacity-90">إجمالي العدد الوارد</div>
+              <div className="text-lg font-extrabold">{NUM(periodQty)}</div>
             </div>
           </div>
           <div id="purch-print" className="overflow-x-auto">
