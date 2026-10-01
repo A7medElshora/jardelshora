@@ -28,8 +28,30 @@ function ReportsPage() {
   const purchases = purchasesQ.data ?? [];
   const pmap = new Map(products.map((p) => [p.id, p]));
 
+  // Aggregates
+  const agg = aggregateByProduct(sales, pmap);
+  const salesTotals = sales.reduce(
+    (acc, s) => {
+      const q = Number(s.quantity_sold);
+      acc.qty += q;
+      acc.revenue += q * Number(s.retail_price_snapshot);
+      acc.cost += q * Number(s.wholesale_price_snapshot);
+      return acc;
+    },
+    { qty: 0, revenue: 0, cost: 0 }
+  );
+  const salesProfit = salesTotals.revenue - salesTotals.cost;
+  const purchTotals = purchases.reduce(
+    (acc, p) => {
+      acc.qty += Number(p.quantity);
+      acc.total += Number(p.quantity) * Number(p.wholesale_price);
+      return acc;
+    },
+    { qty: 0, total: 0 }
+  );
+
   // Build rows per type
-  const tables: Record<ReportKey, { title: string; headers: string[]; rows: (string | number)[][] }> = {
+  const tables: Record<ReportKey, { title: string; headers: string[]; rows: (string | number)[][]; totals: (string | number)[] }> = {
     daily: {
       title: "تقرير الجرد اليومي",
       headers: ["التاريخ", "الصنف", "الكمية المباعة", "سعر الجملة", "سعر القطاعي", "الإجمالي", "الربح"],
