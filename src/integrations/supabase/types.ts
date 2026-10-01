@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      cashier_sales: {
+        Row: {
+          barcode: string | null
+          created_at: string
+          id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          retail_price: number
+          sale_date: string
+          wholesale_price: number
+        }
+        Insert: {
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          product_name: string
+          quantity?: number
+          retail_price?: number
+          sale_date?: string
+          wholesale_price?: number
+        }
+        Update: {
+          barcode?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          retail_price?: number
+          sale_date?: string
+          wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashier_sales_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_sales: {
         Row: {
           created_at: string
@@ -95,6 +139,7 @@ export type Database = {
       }
       products: {
         Row: {
+          barcode: string | null
           created_at: string
           id: string
           low_stock_threshold: number
@@ -105,6 +150,7 @@ export type Database = {
           wholesale_price: number
         }
         Insert: {
+          barcode?: string | null
           created_at?: string
           id?: string
           low_stock_threshold?: number
@@ -115,6 +161,7 @@ export type Database = {
           wholesale_price?: number
         }
         Update: {
+          barcode?: string | null
           created_at?: string
           id?: string
           low_stock_threshold?: number
