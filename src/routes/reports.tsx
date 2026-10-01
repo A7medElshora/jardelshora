@@ -62,16 +62,19 @@ function ReportsPage() {
         const cost = q * Number(s.wholesale_price_snapshot);
         return [DATE_AR(s.sale_date), p?.name ?? "—", NUM(q), EGP(Number(s.wholesale_price_snapshot)), EGP(Number(s.retail_price_snapshot)), EGP(rev), EGP(rev - cost)];
       }),
+      totals: ["الإجمالي", "", NUM(salesTotals.qty), "", "", EGP(salesTotals.revenue), EGP(salesProfit)],
     },
     weekly: {
       title: "تقرير الجرد الأسبوعي",
       headers: ["الصنف", "الكمية المباعة", "إجمالي القطاعي", "إجمالي الجملة", "الربح"],
-      rows: aggregateByProduct(sales, pmap).map((r) => [r.name, NUM(r.qty), EGP(r.revenue), EGP(r.cost), EGP(r.profit)]),
+      rows: agg.map((r) => [r.name, NUM(r.qty), EGP(r.revenue), EGP(r.cost), EGP(r.profit)]),
+      totals: ["الإجمالي", NUM(salesTotals.qty), EGP(salesTotals.revenue), EGP(salesTotals.cost), EGP(salesProfit)],
     },
     monthly: {
       title: "تقرير الجرد الشهري",
       headers: ["الصنف", "الكمية المباعة", "إجمالي القطاعي", "إجمالي الجملة", "الربح"],
-      rows: aggregateByProduct(sales, pmap).map((r) => [r.name, NUM(r.qty), EGP(r.revenue), EGP(r.cost), EGP(r.profit)]),
+      rows: agg.map((r) => [r.name, NUM(r.qty), EGP(r.revenue), EGP(r.cost), EGP(r.profit)]),
+      totals: ["الإجمالي", NUM(salesTotals.qty), EGP(salesTotals.revenue), EGP(salesTotals.cost), EGP(salesProfit)],
     },
     purchases: {
       title: "تقرير الوارد",
