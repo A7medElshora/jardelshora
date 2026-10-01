@@ -87,14 +87,16 @@ function ReportsPage() {
         EGP(Number(p.quantity) * Number(p.wholesale_price)),
         p.supplier ?? "—",
       ]),
+      totals: ["الإجمالي", "", NUM(purchTotals.qty), "", EGP(purchTotals.total), ""],
     },
     profit: {
       title: "تقرير الأرباح",
       headers: ["الصنف", "إجمالي القطاعي", "إجمالي الجملة", "الربح", "هامش الربح %"],
-      rows: aggregateByProduct(sales, pmap).map((r) => [
+      rows: agg.map((r) => [
         r.name, EGP(r.revenue), EGP(r.cost), EGP(r.profit),
         r.revenue > 0 ? `${((r.profit / r.revenue) * 100).toFixed(1)}%` : "—",
       ]),
+      totals: ["الإجمالي", EGP(salesTotals.revenue), EGP(salesTotals.cost), EGP(salesProfit), salesTotals.revenue > 0 ? `${((salesProfit / salesTotals.revenue) * 100).toFixed(1)}%` : "—"],
     },
   };
 
