@@ -19,6 +19,10 @@ import { Route as PriceHistoryRouteImport } from './routes/price-history'
 import { Route as MonthlyRouteImport } from './routes/monthly'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicCashierScanRouteImport } from './routes/api/public/cashier/scan'
+import { Route as ApiPublicCashierReportRouteImport } from './routes/api/public/cashier/report'
+import { Route as ApiPublicCashierProductsRouteImport } from './routes/api/public/cashier/products'
+import { Route as ApiPublicCashierProductsIdRouteImport } from './routes/api/public/cashier/products.$id'
 
 const WeeklyRoute = WeeklyRouteImport.update({
   id: '/weekly',
@@ -70,6 +74,28 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCashierScanRoute = ApiPublicCashierScanRouteImport.update({
+  id: '/api/public/cashier/scan',
+  path: '/api/public/cashier/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCashierReportRoute = ApiPublicCashierReportRouteImport.update({
+  id: '/api/public/cashier/report',
+  path: '/api/public/cashier/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCashierProductsRoute =
+  ApiPublicCashierProductsRouteImport.update({
+    id: '/api/public/cashier/products',
+    path: '/api/public/cashier/products',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCashierProductsIdRoute =
+  ApiPublicCashierProductsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => ApiPublicCashierProductsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +108,10 @@ export interface FileRoutesByFullPath {
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
   '/weekly': typeof WeeklyRoute
+  '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
+  '/api/public/cashier/report': typeof ApiPublicCashierReportRoute
+  '/api/public/cashier/scan': typeof ApiPublicCashierScanRoute
+  '/api/public/cashier/products/$id': typeof ApiPublicCashierProductsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +124,10 @@ export interface FileRoutesByTo {
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
   '/weekly': typeof WeeklyRoute
+  '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
+  '/api/public/cashier/report': typeof ApiPublicCashierReportRoute
+  '/api/public/cashier/scan': typeof ApiPublicCashierScanRoute
+  '/api/public/cashier/products/$id': typeof ApiPublicCashierProductsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +141,10 @@ export interface FileRoutesById {
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
   '/weekly': typeof WeeklyRoute
+  '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
+  '/api/public/cashier/report': typeof ApiPublicCashierReportRoute
+  '/api/public/cashier/scan': typeof ApiPublicCashierScanRoute
+  '/api/public/cashier/products/$id': typeof ApiPublicCashierProductsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +159,10 @@ export interface FileRouteTypes {
     | '/quotation'
     | '/reports'
     | '/weekly'
+    | '/api/public/cashier/products'
+    | '/api/public/cashier/report'
+    | '/api/public/cashier/scan'
+    | '/api/public/cashier/products/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +175,10 @@ export interface FileRouteTypes {
     | '/quotation'
     | '/reports'
     | '/weekly'
+    | '/api/public/cashier/products'
+    | '/api/public/cashier/report'
+    | '/api/public/cashier/scan'
+    | '/api/public/cashier/products/$id'
   id:
     | '__root__'
     | '/'
@@ -145,6 +191,10 @@ export interface FileRouteTypes {
     | '/quotation'
     | '/reports'
     | '/weekly'
+    | '/api/public/cashier/products'
+    | '/api/public/cashier/report'
+    | '/api/public/cashier/scan'
+    | '/api/public/cashier/products/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +208,9 @@ export interface RootRouteChildren {
   QuotationRoute: typeof QuotationRoute
   ReportsRoute: typeof ReportsRoute
   WeeklyRoute: typeof WeeklyRoute
+  ApiPublicCashierProductsRoute: typeof ApiPublicCashierProductsRouteWithChildren
+  ApiPublicCashierReportRoute: typeof ApiPublicCashierReportRoute
+  ApiPublicCashierScanRoute: typeof ApiPublicCashierScanRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,8 +285,50 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cashier/scan': {
+      id: '/api/public/cashier/scan'
+      path: '/api/public/cashier/scan'
+      fullPath: '/api/public/cashier/scan'
+      preLoaderRoute: typeof ApiPublicCashierScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cashier/report': {
+      id: '/api/public/cashier/report'
+      path: '/api/public/cashier/report'
+      fullPath: '/api/public/cashier/report'
+      preLoaderRoute: typeof ApiPublicCashierReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cashier/products': {
+      id: '/api/public/cashier/products'
+      path: '/api/public/cashier/products'
+      fullPath: '/api/public/cashier/products'
+      preLoaderRoute: typeof ApiPublicCashierProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cashier/products/$id': {
+      id: '/api/public/cashier/products/$id'
+      path: '/$id'
+      fullPath: '/api/public/cashier/products/$id'
+      preLoaderRoute: typeof ApiPublicCashierProductsIdRouteImport
+      parentRoute: typeof ApiPublicCashierProductsRoute
+    }
   }
 }
+
+interface ApiPublicCashierProductsRouteChildren {
+  ApiPublicCashierProductsIdRoute: typeof ApiPublicCashierProductsIdRoute
+}
+
+const ApiPublicCashierProductsRouteChildren: ApiPublicCashierProductsRouteChildren =
+  {
+    ApiPublicCashierProductsIdRoute: ApiPublicCashierProductsIdRoute,
+  }
+
+const ApiPublicCashierProductsRouteWithChildren =
+  ApiPublicCashierProductsRoute._addFileChildren(
+    ApiPublicCashierProductsRouteChildren,
+  )
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -246,6 +341,9 @@ const rootRouteChildren: RootRouteChildren = {
   QuotationRoute: QuotationRoute,
   ReportsRoute: ReportsRoute,
   WeeklyRoute: WeeklyRoute,
+  ApiPublicCashierProductsRoute: ApiPublicCashierProductsRouteWithChildren,
+  ApiPublicCashierReportRoute: ApiPublicCashierReportRoute,
+  ApiPublicCashierScanRoute: ApiPublicCashierScanRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
