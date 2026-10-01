@@ -169,6 +169,13 @@ function ReportsPage() {
                 <tr><td colSpan={current.headers.length} className="px-3 py-10 text-center text-muted-foreground">لا توجد بيانات لهذه الفترة.</td></tr>
               )}
             </tbody>
+            {current.rows.length > 0 && (
+              <tfoot className="bg-secondary/60 font-extrabold border-t-2 border-border">
+                <tr>
+                  {current.totals.map((c, j) => <td key={j} className="px-3 py-2.5">{c}</td>)}
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>
