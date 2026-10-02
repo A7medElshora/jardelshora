@@ -76,10 +76,10 @@ function CashierPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="عدد العمليات" value={NUM.format(sales.length)} icon={ScanBarcode} variant="info" />
-          <StatCard title="إجمالي القطع المباعة" value={NUM.format(totalQty)} icon={ScanBarcode} variant="primary" />
-          <StatCard title="إجمالي المبيعات" value={EGP.format(totalRetail)} icon={ScanBarcode} variant="success" />
-          <StatCard title="إجمالي الأرباح" value={EGP.format(totalProfit)} icon={ScanBarcode} variant="warning" />
+          <StatCard label="عدد العمليات" value={NUM(sales.length)} icon={ScanBarcode} variant="info" />
+          <StatCard label="إجمالي القطع المباعة" value={NUM(totalQty)} icon={ScanBarcode} variant="primary" />
+          <StatCard label="إجمالي المبيعات" value={EGP(totalRetail)} icon={ScanBarcode} variant="success" />
+          <StatCard label="إجمالي الأرباح" value={EGP(totalProfit)} icon={ScanBarcode} variant="warning" />
         </div>
 
         <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
@@ -115,10 +115,10 @@ function CashierPage() {
                       <td className="px-4 py-2">{time}</td>
                       <td className="px-4 py-2 font-medium">{s.product_name}</td>
                       <td className="px-4 py-2 font-mono text-xs" dir="ltr">{s.barcode ?? "—"}</td>
-                      <td className="px-4 py-2">{NUM.format(Number(s.quantity))}</td>
-                      <td className="px-4 py-2">{EGP.format(Number(s.retail_price))}</td>
-                      <td className="px-4 py-2 font-bold">{EGP.format(total)}</td>
-                      <td className="px-4 py-2 text-success font-bold">{EGP.format(profit)}</td>
+                      <td className="px-4 py-2">{NUM(Number(s.quantity))}</td>
+                      <td className="px-4 py-2">{EGP(Number(s.retail_price))}</td>
+                      <td className="px-4 py-2 font-bold">{EGP(total)}</td>
+                      <td className="px-4 py-2 text-success font-bold">{EGP(profit)}</td>
                     </tr>
                   );
                 })}
@@ -127,10 +127,10 @@ function CashierPage() {
                 <tfoot>
                   <tr className="border-t-2 border-border bg-muted/50 font-bold">
                     <td className="px-4 py-2" colSpan={4}>الإجمالي</td>
-                    <td className="px-4 py-2">{NUM.format(totalQty)}</td>
+                    <td className="px-4 py-2">{NUM(totalQty)}</td>
                     <td className="px-4 py-2">—</td>
-                    <td className="px-4 py-2">{EGP.format(totalRetail)}</td>
-                    <td className="px-4 py-2 text-success">{EGP.format(totalProfit)}</td>
+                    <td className="px-4 py-2">{EGP(totalRetail)}</td>
+                    <td className="px-4 py-2 text-success">{EGP(totalProfit)}</td>
                   </tr>
                 </tfoot>
               )}
