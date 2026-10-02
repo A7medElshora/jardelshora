@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/cashier/products/$id")({
         const parsed = PatchSchema.safeParse(await readBody(request));
         if (!parsed.success || Object.keys(parsed.data).length === 0)
           return json({ success: false, error: "بيانات غير صحيحة" }, 400);
-        const { data, error } = await db().from("products").update(parsed.data).eq("id", params.id).select().maybeSingle();
+        const { data, error } = await db().from("cashier_products").update(parsed.data).eq("id", params.id).select().maybeSingle();
         if (error) return json({ success: false, error: error.code === "23505" ? "الباركود أو الاسم مستخدم" : error.message }, error.code === "23505" ? 409 : 500);
         if (!data) return json({ success: false, error: "الصنف غير موجود" }, 404);
         return json({ success: true, data });
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/cashier/products/$id")({
         const denied = checkKey(request);
         if (denied) return denied;
         if (!Id.safeParse(params.id).success) return json({ success: false, error: "معرّف غير صحيح" }, 400);
-        const { data, error } = await db().from("products").delete().eq("id", params.id).select("id");
+        const { data, error } = await db().from("cashier_products").delete().eq("id", params.id).select("id");
         if (error) return json({ success: false, error: error.message }, 500);
         if (!data?.length) return json({ success: false, error: "الصنف غير موجود" }, 404);
         return json({ success: true });

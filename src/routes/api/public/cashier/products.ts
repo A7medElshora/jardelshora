@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/cashier/products")({
         if (denied) return denied;
         const url = new URL(request.url);
         const barcode = url.searchParams.get("barcode");
-        let q = db().from("products").select("*").order("name");
+        let q = db().from("cashier_products").select("*").order("name");
         if (barcode) q = q.eq("barcode", barcode);
         const { data, error } = await q;
         if (error) return json({ success: false, error: error.message }, 500);
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/cashier/products")({
         if (denied) return denied;
         const parsed = ProductSchema.safeParse(await readBody(request));
         if (!parsed.success) return json({ success: false, error: "بيانات غير صحيحة", details: parsed.error.flatten() }, 400);
-        const { data, error } = await db().from("products").insert(parsed.data).select().single();
+        const { data, error } = await db().from("cashier_products").insert(parsed.data).select().single();
         if (error) {
           const dup = error.code === "23505";
           return json({ success: false, error: dup ? "الباركود أو اسم الصنف موجود مسبقاً" : error.message }, dup ? 409 : 500);
