@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/cashier/scan")({
         const { barcode, quantity } = parsed.data;
         const sb = db();
 
-        const { data: p, error: pErr } = await sb.from("products").select("*").eq("barcode", barcode).maybeSingle();
+        const { data: p, error: pErr } = await sb.from("cashier_products").select("*").eq("barcode", barcode).maybeSingle();
         if (pErr) return json({ success: false, error: pErr.message }, 500);
         if (!p) return json({ success: false, error: "لا يوجد صنف بهذا الباركود" }, 404);
         if (Number(p.quantity) < quantity)
@@ -43,26 +43,7 @@ export const Route = createFileRoute("/api/public/cashier/scan")({
           .single();
         if (sErr) return json({ success: false, error: sErr.message }, 500);
 
-        await sb.from("products").update({ quantity: newStock }).eq("id", p.id);
-
-        // ربط مع الجرد اليومي في الموقع
-        const { data: ds } = await sb
-          .from("daily_sales")
-          .select("*")
-          .eq("product_id", p.id)
-          .eq("sale_date", today)
-          .maybeSingle();
-        if (ds) {
-          await sb.from("daily_sales").update({ quantity_sold: Number(ds.quantity_sold) + quantity }).eq("id", ds.id);
-        } else {
-          await sb.from("daily_sales").insert({
-            product_id: p.id,
-            sale_date: today,
-            quantity_sold: quantity,
-            wholesale_price_snapshot: p.wholesale_price,
-            retail_price_snapshot: p.retail_price,
-          });
-        }
+        await sb.from("cashier_products").update({ quantity: newStock }).eq("id", p.id);
 
         return json({
           success: true,
