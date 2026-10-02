@@ -45,25 +45,6 @@ export const Route = createFileRoute("/api/public/cashier/scan")({
 
         await sb.from("cashier_products").update({ quantity: newStock }).eq("id", p.id);
 
-        // ربط مع الجرد اليومي في الموقع
-        const { data: ds } = await sb
-          .from("daily_sales")
-          .select("*")
-          .eq("product_id", p.id)
-          .eq("sale_date", today)
-          .maybeSingle();
-        if (ds) {
-          await sb.from("daily_sales").update({ quantity_sold: Number(ds.quantity_sold) + quantity }).eq("id", ds.id);
-        } else {
-          await sb.from("daily_sales").insert({
-            product_id: p.id,
-            sale_date: today,
-            quantity_sold: quantity,
-            wholesale_price_snapshot: p.wholesale_price,
-            retail_price_snapshot: p.retail_price,
-          });
-        }
-
         return json({
           success: true,
           data: {
