@@ -76,10 +76,10 @@ function CashierPage() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard title="عدد العمليات" value={NUM(sales.length)} icon={ScanBarcode} variant="info" />
-          <StatCard title="إجمالي القطع المباعة" value={NUM(totalQty)} icon={ScanBarcode} variant="primary" />
-          <StatCard title="إجمالي المبيعات" value={EGP(totalRetail)} icon={ScanBarcode} variant="success" />
-          <StatCard title="إجمالي الأرباح" value={EGP(totalProfit)} icon={ScanBarcode} variant="warning" />
+          <StatCard label="عدد العمليات" value={NUM(sales.length)} icon={ScanBarcode} variant="info" />
+          <StatCard label="إجمالي القطع المباعة" value={NUM(totalQty)} icon={ScanBarcode} variant="primary" />
+          <StatCard label="إجمالي المبيعات" value={EGP(totalRetail)} icon={ScanBarcode} variant="success" />
+          <StatCard label="إجمالي الأرباح" value={EGP(totalProfit)} icon={ScanBarcode} variant="warning" />
         </div>
 
         <div className="rounded-xl border border-border bg-card shadow-card overflow-hidden">
