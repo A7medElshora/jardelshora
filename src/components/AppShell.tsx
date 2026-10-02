@@ -9,6 +9,7 @@ import {
   History,
   FileBarChart2,
   LogOut,
+  ScanBarcode,
   Moon,
   Sun,
   Menu,
