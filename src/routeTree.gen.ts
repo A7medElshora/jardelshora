@@ -9,65 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WeeklyRouteImport } from './routes/weekly'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as QuotationRouteImport } from './routes/quotation'
-import { Route as PurchasesRouteImport } from './routes/purchases'
-import { Route as ProfitsRouteImport } from './routes/profits'
-import { Route as ProductsRouteImport } from './routes/products'
-import { Route as PriceHistoryRouteImport } from './routes/price-history'
-import { Route as MonthlyRouteImport } from './routes/monthly'
-import { Route as DailyRouteImport } from './routes/daily'
-import { Route as CashierRouteImport } from './routes/cashier'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiPublicCashierScanRouteImport } from './routes/api/public/cashier/scan'
-import { Route as ApiPublicCashierReportRouteImport } from './routes/api/public/cashier/report'
+import { Route as CashierRouteImport } from './routes/cashier'
+import { Route as DailyRouteImport } from './routes/daily'
+import { Route as MonthlyRouteImport } from './routes/monthly'
+import { Route as PriceHistoryRouteImport } from './routes/price-history'
+import { Route as ProductsRouteImport } from './routes/products'
+import { Route as ProfitsRouteImport } from './routes/profits'
+import { Route as PurchasesRouteImport } from './routes/purchases'
+import { Route as QuotationRouteImport } from './routes/quotation'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as WeeklyRouteImport } from './routes/weekly'
 import { Route as ApiPublicCashierProductsRouteImport } from './routes/api/public/cashier/products'
+import { Route as ApiPublicCashierReportRouteImport } from './routes/api/public/cashier/report'
+import { Route as ApiPublicCashierScanRouteImport } from './routes/api/public/cashier/scan'
 import { Route as ApiPublicCashierProductsIdRouteImport } from './routes/api/public/cashier/products.$id'
 
-const WeeklyRoute = WeeklyRouteImport.update({
-  id: '/weekly',
-  path: '/weekly',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const QuotationRoute = QuotationRouteImport.update({
-  id: '/quotation',
-  path: '/quotation',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PurchasesRoute = PurchasesRouteImport.update({
-  id: '/purchases',
-  path: '/purchases',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProfitsRoute = ProfitsRouteImport.update({
-  id: '/profits',
-  path: '/profits',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ProductsRoute = ProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PriceHistoryRoute = PriceHistoryRouteImport.update({
-  id: '/price-history',
-  path: '/price-history',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MonthlyRoute = MonthlyRouteImport.update({
-  id: '/monthly',
-  path: '/monthly',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DailyRoute = DailyRouteImport.update({
-  id: '/daily',
-  path: '/daily',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CashierRoute = CashierRouteImport.update({
@@ -75,19 +35,49 @@ const CashierRoute = CashierRouteImport.update({
   path: '/cashier',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DailyRoute = DailyRouteImport.update({
+  id: '/daily',
+  path: '/daily',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicCashierScanRoute = ApiPublicCashierScanRouteImport.update({
-  id: '/api/public/cashier/scan',
-  path: '/api/public/cashier/scan',
+const MonthlyRoute = MonthlyRouteImport.update({
+  id: '/monthly',
+  path: '/monthly',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicCashierReportRoute = ApiPublicCashierReportRouteImport.update({
-  id: '/api/public/cashier/report',
-  path: '/api/public/cashier/report',
+const PriceHistoryRoute = PriceHistoryRouteImport.update({
+  id: '/price-history',
+  path: '/price-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfitsRoute = ProfitsRouteImport.update({
+  id: '/profits',
+  path: '/profits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PurchasesRoute = PurchasesRouteImport.update({
+  id: '/purchases',
+  path: '/purchases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuotationRoute = QuotationRouteImport.update({
+  id: '/quotation',
+  path: '/quotation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WeeklyRoute = WeeklyRouteImport.update({
+  id: '/weekly',
+  path: '/weekly',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicCashierProductsRoute =
@@ -96,6 +86,16 @@ const ApiPublicCashierProductsRoute =
     path: '/api/public/cashier/products',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCashierReportRoute = ApiPublicCashierReportRouteImport.update({
+  id: '/api/public/cashier/report',
+  path: '/api/public/cashier/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCashierScanRoute = ApiPublicCashierScanRouteImport.update({
+  id: '/api/public/cashier/scan',
+  path: '/api/public/cashier/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCashierProductsIdRoute =
   ApiPublicCashierProductsIdRouteImport.update({
     id: '/$id',
@@ -228,67 +228,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/weekly': {
-      id: '/weekly'
-      path: '/weekly'
-      fullPath: '/weekly'
-      preLoaderRoute: typeof WeeklyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/quotation': {
-      id: '/quotation'
-      path: '/quotation'
-      fullPath: '/quotation'
-      preLoaderRoute: typeof QuotationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/purchases': {
-      id: '/purchases'
-      path: '/purchases'
-      fullPath: '/purchases'
-      preLoaderRoute: typeof PurchasesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/profits': {
-      id: '/profits'
-      path: '/profits'
-      fullPath: '/profits'
-      preLoaderRoute: typeof ProfitsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/products': {
-      id: '/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProductsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/price-history': {
-      id: '/price-history'
-      path: '/price-history'
-      fullPath: '/price-history'
-      preLoaderRoute: typeof PriceHistoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/monthly': {
-      id: '/monthly'
-      path: '/monthly'
-      fullPath: '/monthly'
-      preLoaderRoute: typeof MonthlyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/daily': {
-      id: '/daily'
-      path: '/daily'
-      fullPath: '/daily'
-      preLoaderRoute: typeof DailyRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cashier': {
@@ -298,18 +242,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CashierRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/daily': {
+      id: '/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof DailyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/cashier/scan': {
-      id: '/api/public/cashier/scan'
-      path: '/api/public/cashier/scan'
-      fullPath: '/api/public/cashier/scan'
-      preLoaderRoute: typeof ApiPublicCashierScanRouteImport
+    '/monthly': {
+      id: '/monthly'
+      path: '/monthly'
+      fullPath: '/monthly'
+      preLoaderRoute: typeof MonthlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/price-history': {
+      id: '/price-history'
+      path: '/price-history'
+      fullPath: '/price-history'
+      preLoaderRoute: typeof PriceHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profits': {
+      id: '/profits'
+      path: '/profits'
+      fullPath: '/profits'
+      preLoaderRoute: typeof ProfitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/purchases': {
+      id: '/purchases'
+      path: '/purchases'
+      fullPath: '/purchases'
+      preLoaderRoute: typeof PurchasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quotation': {
+      id: '/quotation'
+      path: '/quotation'
+      fullPath: '/quotation'
+      preLoaderRoute: typeof QuotationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/weekly': {
+      id: '/weekly'
+      path: '/weekly'
+      fullPath: '/weekly'
+      preLoaderRoute: typeof WeeklyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cashier/products': {
+      id: '/api/public/cashier/products'
+      path: '/api/public/cashier/products'
+      fullPath: '/api/public/cashier/products'
+      preLoaderRoute: typeof ApiPublicCashierProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cashier/report': {
@@ -319,11 +319,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCashierReportRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/cashier/products': {
-      id: '/api/public/cashier/products'
-      path: '/api/public/cashier/products'
-      fullPath: '/api/public/cashier/products'
-      preLoaderRoute: typeof ApiPublicCashierProductsRouteImport
+    '/api/public/cashier/scan': {
+      id: '/api/public/cashier/scan'
+      path: '/api/public/cashier/scan'
+      fullPath: '/api/public/cashier/scan'
+      preLoaderRoute: typeof ApiPublicCashierScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cashier/products/$id': {
