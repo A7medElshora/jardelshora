@@ -10,6 +10,7 @@ import {
   FileBarChart2,
   LogOut,
   ScanBarcode,
+  Layers,
   Moon,
   Sun,
   Menu,
