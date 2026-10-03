@@ -29,6 +29,7 @@ const nav: NavItem[] = [
   { to: "/purchases", label: "المضاف (الوارد)", icon: PackagePlus },
   { to: "/products", label: "الأصناف", icon: Boxes },
   { to: "/profits", label: "الأرباح", icon: FileBarChart2 },
+  { to: "/taqseemat", label: "تقسيمات", icon: Layers },
   { to: "/cashier", label: "الكاشير", icon: ScanBarcode },
   { to: "/quotation", label: "بيان أسعار", icon: History },
   { to: "/price-history", label: "سجل الأسعار", icon: History },
