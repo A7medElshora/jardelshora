@@ -86,6 +86,33 @@ export type Database = {
         }
         Relationships: []
       }
+      cigarette_sales: {
+        Row: {
+          created_at: string
+          id: string
+          retail_total: number
+          sale_date: string
+          updated_at: string
+          wholesale_total: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          retail_total?: number
+          sale_date: string
+          updated_at?: string
+          wholesale_total?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          retail_total?: number
+          sale_date?: string
+          updated_at?: string
+          wholesale_total?: number
+        }
+        Relationships: []
+      }
       daily_sales: {
         Row: {
           created_at: string
@@ -265,6 +292,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      taqseemat_withdrawals: {
+        Row: {
+          amount: number
+          created_at: string
+          entry_date: string
+          id: string
+          kind: string
+          note: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          entry_date: string
+          id?: string
+          kind: string
+          note?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          entry_date?: string
+          id?: string
+          kind?: string
+          note?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

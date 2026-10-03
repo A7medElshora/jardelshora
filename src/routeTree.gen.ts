@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WeeklyRouteImport } from './routes/weekly'
+import { Route as TaqseematRouteImport } from './routes/taqseemat'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as QuotationRouteImport } from './routes/quotation'
 import { Route as PurchasesRouteImport } from './routes/purchases'
@@ -28,6 +29,11 @@ import { Route as ApiPublicCashierProductsIdRouteImport } from './routes/api/pub
 const WeeklyRoute = WeeklyRouteImport.update({
   id: '/weekly',
   path: '/weekly',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TaqseematRoute = TaqseematRouteImport.update({
+  id: '/taqseemat',
+  path: '/taqseemat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportsRoute = ReportsRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/purchases': typeof PurchasesRoute
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
+  '/taqseemat': typeof TaqseematRoute
   '/weekly': typeof WeeklyRoute
   '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
   '/api/public/cashier/report': typeof ApiPublicCashierReportRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/purchases': typeof PurchasesRoute
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
+  '/taqseemat': typeof TaqseematRoute
   '/weekly': typeof WeeklyRoute
   '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
   '/api/public/cashier/report': typeof ApiPublicCashierReportRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/purchases': typeof PurchasesRoute
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
+  '/taqseemat': typeof TaqseematRoute
   '/weekly': typeof WeeklyRoute
   '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
   '/api/public/cashier/report': typeof ApiPublicCashierReportRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/purchases'
     | '/quotation'
     | '/reports'
+    | '/taqseemat'
     | '/weekly'
     | '/api/public/cashier/products'
     | '/api/public/cashier/report'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/purchases'
     | '/quotation'
     | '/reports'
+    | '/taqseemat'
     | '/weekly'
     | '/api/public/cashier/products'
     | '/api/public/cashier/report'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/purchases'
     | '/quotation'
     | '/reports'
+    | '/taqseemat'
     | '/weekly'
     | '/api/public/cashier/products'
     | '/api/public/cashier/report'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   PurchasesRoute: typeof PurchasesRoute
   QuotationRoute: typeof QuotationRoute
   ReportsRoute: typeof ReportsRoute
+  TaqseematRoute: typeof TaqseematRoute
   WeeklyRoute: typeof WeeklyRoute
   ApiPublicCashierProductsRoute: typeof ApiPublicCashierProductsRouteWithChildren
   ApiPublicCashierReportRoute: typeof ApiPublicCashierReportRoute
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/weekly'
       fullPath: '/weekly'
       preLoaderRoute: typeof WeeklyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/taqseemat': {
+      id: '/taqseemat'
+      path: '/taqseemat'
+      fullPath: '/taqseemat'
+      preLoaderRoute: typeof TaqseematRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reports': {
@@ -361,6 +381,7 @@ const rootRouteChildren: RootRouteChildren = {
   PurchasesRoute: PurchasesRoute,
   QuotationRoute: QuotationRoute,
   ReportsRoute: ReportsRoute,
+  TaqseematRoute: TaqseematRoute,
   WeeklyRoute: WeeklyRoute,
   ApiPublicCashierProductsRoute: ApiPublicCashierProductsRouteWithChildren,
   ApiPublicCashierReportRoute: ApiPublicCashierReportRoute,
