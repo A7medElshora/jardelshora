@@ -154,6 +154,30 @@ export type Database = {
           },
         ]
       }
+      manual_sales: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          sale_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          sale_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          sale_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       price_history: {
         Row: {
           changed_by: string | null
