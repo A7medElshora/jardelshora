@@ -252,6 +252,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profit_expenses: {
+        Row: {
+          amount: number
+          created_at: string
+          expense_date: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          expense_date: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expense_date?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
       profit_withdrawals: {
         Row: {
           created_at: string
