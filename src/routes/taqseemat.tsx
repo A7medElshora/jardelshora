@@ -98,18 +98,9 @@ function TaqseematPage() {
     qc.invalidateQueries({ queryKey: ["taqseemat-withdrawals"] });
     qc.invalidateQueries({ queryKey: ["taqseemat-profits"] });
     qc.invalidateQueries({ queryKey: ["taqseemat-cig"] });
-    qc.invalidateQueries({ queryKey: ["taqseemat-purchases"] });
   };
 
-  // قطاعي السجاير من الجرد اليومي (كل أصناف الجرد سجاير)
   const cigByDate = useMemo(() => new Map(cigSales.map((x) => [x.sale_date, Number(x.retail_total)])), [cigSales]);
-  // منصرف السجاير من الوارد (الكمية × سعر الجملة) حسب اليوم
-  const purByDate = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const p of purchases) m.set(p.purchase_date, (m.get(p.purchase_date) ?? 0) + Number(p.quantity) * Number(p.wholesale_price));
-    return m;
-  }, [purchases]);
-
   const manualByDate = useMemo(() => new Map(manualSales.map((x) => [x.sale_date, Number(x.amount)])), [manualSales]);
   const profitByDate = useMemo(() => new Map(profitWs.map((x) => [x.profit_date, Number(x.taken_amount)])), [profitWs]);
 
@@ -126,7 +117,7 @@ function TaqseematPage() {
   const filtering = Boolean(from || to);
 
   const dates = useMemo(() => {
-    const set = new Set<string>([...cigByDate.keys(), ...manualByDate.keys(), ...wByDate.keys(), ...profitByDate.keys(), ...purByDate.keys()]);
+    const set = new Set<string>([...cigByDate.keys(), ...manualByDate.keys(), ...wByDate.keys(), ...profitByDate.keys()]);
     let list = [...set];
     if (filtering) {
       list = list.filter((d) => (!from || d >= from) && (!to || d <= to));
@@ -134,16 +125,17 @@ function TaqseematPage() {
       list = list.filter((d) => monthKey(d) === month);
     }
     return list.sort((a, b) => (a < b ? 1 : -1));
-  }, [cigByDate, manualByDate, wByDate, profitByDate, purByDate, filtering, from, to, month]);
+  }, [cigByDate, manualByDate, wByDate, profitByDate, filtering, from, to, month]);
 
   // Totals (للفترة المعروضة)
   const cigRetailTotal = dates.reduce((s, d) => s + (cigByDate.get(d) ?? 0), 0);
   const salesTotal = dates.reduce((s, d) => s + (manualByDate.get(d) ?? 0), 0);
   const profitTotal = dates.reduce((s, d) => s + (profitByDate.get(d) ?? 0), 0);
   const sumW = (d: string, k: "cigarettes" | "sales") => (wByDate.get(d)?.[k] ?? []).reduce((a, x) => a + Number(x.amount), 0);
-  const cigExpTotal = dates.reduce((s, d) => s + (purByDate.get(d) ?? 0) + sumW(d, "cigarettes"), 0);
+  const cigExpTotal = dates.reduce((s, d) => s + sumW(d, "cigarettes"), 0);
   const salesExpTotal = dates.reduce((s, d) => s + sumW(d, "sales"), 0);
-  const remaining = cigRetailTotal + salesTotal - profitTotal - cigExpTotal - salesExpTotal;
+  const daysTotal = cigRetailTotal + salesTotal + profitTotal;
+  const remaining = daysTotal - profitTotal - cigExpTotal - salesExpTotal;
 
   const saveCig = async (date: string, amount: number) => {
     const { error } = await supabase.from("cigarette_sales").upsert({ sale_date: date, retail_total: amount }, { onConflict: "sale_date" });
