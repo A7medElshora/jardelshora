@@ -341,10 +341,10 @@ function TaqseematPage() {
                 const cigRetail = cigByDate.get(d) ?? 0;
                 const salesRev = manualByDate.get(d) ?? 0;
                 const dayProfit = profitByDate.get(d) ?? 0;
-                const dayTotal = cigRetail + salesRev;
-                const purExp = purByDate.get(d) ?? 0;
+                const dayTotal = cigRetail + salesRev + dayProfit;
                 const hasCig = cigByDate.has(d);
                 const hasSales = manualByDate.has(d);
+                const hasProfit = profitByDate.has(d);
                 const cellBtns = (onEdit: () => void, onDel?: () => void) => (
                   <span className="inline-flex gap-1 ms-2 no-print">
                     <button onClick={onEdit} className="text-primary hover:opacity-70" aria-label="تعديل"><Pencil className="size-3.5" /></button>
@@ -358,11 +358,10 @@ function TaqseematPage() {
                     <td className="px-4 py-3 font-bold">{EGP(dayTotal)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{hasCig ? EGP(cigRetail) : "—"}{cellBtns(() => editValue("قطاعي السجاير", cigRetail, (n) => saveCig(d, n)), hasCig ? () => deleteCig(d) : undefined)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{hasSales ? EGP(salesRev) : "—"}{cellBtns(() => editValue("المبيعات", salesRev, (n) => saveSales(d, n)), hasSales ? () => deleteSales(d) : undefined)}</td>
-                    <td className="px-4 py-3 text-success font-bold">{dayProfit !== 0 ? EGP(dayProfit) : "—"}</td>
+                    <td className="px-4 py-3 text-success font-bold whitespace-nowrap">{hasProfit ? EGP(dayProfit) : "—"}{cellBtns(() => editValue("الأرباح", dayProfit, (n) => saveProfit(d, n)), hasProfit ? () => deleteProfit(d) : undefined)}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {purExp > 0 && <span className="inline-flex rounded-full bg-warning/20 px-2 py-0.5 text-xs font-bold" title="من الوارد">{NUM(purExp)} (وارد)</span>}
-                        {w.cigarettes.length === 0 && purExp === 0 && "—"}
+                        {w.cigarettes.length === 0 && "—"}
                         {w.cigarettes.map((x) => (
                           <span key={x.id} className="inline-flex items-center gap-1 rounded-full bg-warning/20 text-warning-foreground px-2 py-0.5 text-xs font-bold">
                             {NUM(Number(x.amount))}
