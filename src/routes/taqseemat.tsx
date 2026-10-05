@@ -397,7 +397,7 @@ function TaqseematPage() {
               <tfoot>
                 <tr className="bg-muted/60 font-extrabold">
                   <td className="px-4 py-3">الإجمالي</td>
-                  <td className="px-4 py-3">{EGP(cigRetailTotal + salesTotal)}</td>
+                  <td className="px-4 py-3">{EGP(daysTotal)}</td>
                   <td className="px-4 py-3">{EGP(cigRetailTotal)}</td>
                   <td className="px-4 py-3">{EGP(salesTotal)}</td>
                   <td className="px-4 py-3 text-success">{EGP(profitTotal)}</td>
