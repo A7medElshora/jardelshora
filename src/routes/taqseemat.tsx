@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { supabase } from "@/integrations/supabase/client";
-import { listPurchases } from "@/lib/api";
 import { EGP, NUM, DATE_AR, todayISO } from "@/lib/format";
 import { Cigarette, ShoppingBasket, Wallet, Layers, Plus, Trash2, Save, ChevronRight, ChevronLeft, X, Pencil, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
@@ -44,10 +43,10 @@ async function listWithdrawals(): Promise<Withdrawal[]> {
   return (data ?? []) as Withdrawal[];
 }
 
-async function listProfitWithdrawals(): Promise<ProfitW[]> {
-  const { data, error } = await supabase.from("profit_withdrawals").select("id, profit_date, taken_amount");
+async function listTaqseematProfits(): Promise<ProfitW[]> {
+  const { data, error } = await (supabase as any).from("taqseemat_profits").select("id, profit_date, amount");
   if (error) throw error;
-  return (data ?? []) as ProfitW[];
+  return ((data ?? []) as any[]).map((x) => ({ id: x.id, profit_date: x.profit_date, taken_amount: x.amount }));
 }
 
 const MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
