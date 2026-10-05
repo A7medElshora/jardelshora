@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { supabase } from "@/integrations/supabase/client";
-import { listPurchases } from "@/lib/api";
 import { EGP, NUM, DATE_AR, todayISO } from "@/lib/format";
 import { Cigarette, ShoppingBasket, Wallet, Layers, Plus, Trash2, Save, ChevronRight, ChevronLeft, X, Pencil, PiggyBank } from "lucide-react";
 import { toast } from "sonner";
@@ -44,10 +43,10 @@ async function listWithdrawals(): Promise<Withdrawal[]> {
   return (data ?? []) as Withdrawal[];
 }
 
-async function listProfitWithdrawals(): Promise<ProfitW[]> {
-  const { data, error } = await supabase.from("profit_withdrawals").select("id, profit_date, taken_amount");
+async function listTaqseematProfits(): Promise<ProfitW[]> {
+  const { data, error } = await (supabase as any).from("taqseemat_profits").select("id, profit_date, amount");
   if (error) throw error;
-  return (data ?? []) as ProfitW[];
+  return ((data ?? []) as any[]).map((x) => ({ id: x.id, profit_date: x.profit_date, taken_amount: x.amount }));
 }
 
 const MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
@@ -78,39 +77,30 @@ function TaqseematPage() {
   const [wKind, setWKind] = useState<"cigarettes" | "sales">("sales");
   const [wAmount, setWAmount] = useState("");
   const [wNote, setWNote] = useState("");
+  const [pDate, setPDate] = useState(todayISO());
+  const [pAmount, setPAmount] = useState("");
   const [month, setMonth] = useState(currentMonthKey());
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
   const manualQ = useQuery({ queryKey: ["manual-sales"], queryFn: listManualSales });
   const wQ = useQuery({ queryKey: ["taqseemat-withdrawals"], queryFn: listWithdrawals });
-  const profitQ = useQuery({ queryKey: ["taqseemat-profits"], queryFn: listProfitWithdrawals });
+  const profitQ = useQuery({ queryKey: ["taqseemat-profits"], queryFn: listTaqseematProfits });
   const cigQ = useQuery({ queryKey: ["taqseemat-cig"], queryFn: listCigSales });
-  const purQ = useQuery({ queryKey: ["taqseemat-purchases"], queryFn: () => listPurchases() });
 
   const manualSales = manualQ.data ?? [];
   const withdrawals = wQ.data ?? [];
   const profitWs = profitQ.data ?? [];
   const cigSales = cigQ.data ?? [];
-  const purchases = purQ.data ?? [];
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["manual-sales"] });
     qc.invalidateQueries({ queryKey: ["taqseemat-withdrawals"] });
     qc.invalidateQueries({ queryKey: ["taqseemat-profits"] });
     qc.invalidateQueries({ queryKey: ["taqseemat-cig"] });
-    qc.invalidateQueries({ queryKey: ["taqseemat-purchases"] });
   };
 
-  // قطاعي السجاير من الجرد اليومي (كل أصناف الجرد سجاير)
   const cigByDate = useMemo(() => new Map(cigSales.map((x) => [x.sale_date, Number(x.retail_total)])), [cigSales]);
-  // منصرف السجاير من الوارد (الكمية × سعر الجملة) حسب اليوم
-  const purByDate = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const p of purchases) m.set(p.purchase_date, (m.get(p.purchase_date) ?? 0) + Number(p.quantity) * Number(p.wholesale_price));
-    return m;
-  }, [purchases]);
-
   const manualByDate = useMemo(() => new Map(manualSales.map((x) => [x.sale_date, Number(x.amount)])), [manualSales]);
   const profitByDate = useMemo(() => new Map(profitWs.map((x) => [x.profit_date, Number(x.taken_amount)])), [profitWs]);
 
@@ -127,7 +117,7 @@ function TaqseematPage() {
   const filtering = Boolean(from || to);
 
   const dates = useMemo(() => {
-    const set = new Set<string>([...cigByDate.keys(), ...manualByDate.keys(), ...wByDate.keys(), ...profitByDate.keys(), ...purByDate.keys()]);
+    const set = new Set<string>([...cigByDate.keys(), ...manualByDate.keys(), ...wByDate.keys(), ...profitByDate.keys()]);
     let list = [...set];
     if (filtering) {
       list = list.filter((d) => (!from || d >= from) && (!to || d <= to));
@@ -135,16 +125,17 @@ function TaqseematPage() {
       list = list.filter((d) => monthKey(d) === month);
     }
     return list.sort((a, b) => (a < b ? 1 : -1));
-  }, [cigByDate, manualByDate, wByDate, profitByDate, purByDate, filtering, from, to, month]);
+  }, [cigByDate, manualByDate, wByDate, profitByDate, filtering, from, to, month]);
 
   // Totals (للفترة المعروضة)
   const cigRetailTotal = dates.reduce((s, d) => s + (cigByDate.get(d) ?? 0), 0);
   const salesTotal = dates.reduce((s, d) => s + (manualByDate.get(d) ?? 0), 0);
   const profitTotal = dates.reduce((s, d) => s + (profitByDate.get(d) ?? 0), 0);
   const sumW = (d: string, k: "cigarettes" | "sales") => (wByDate.get(d)?.[k] ?? []).reduce((a, x) => a + Number(x.amount), 0);
-  const cigExpTotal = dates.reduce((s, d) => s + (purByDate.get(d) ?? 0) + sumW(d, "cigarettes"), 0);
+  const cigExpTotal = dates.reduce((s, d) => s + sumW(d, "cigarettes"), 0);
   const salesExpTotal = dates.reduce((s, d) => s + sumW(d, "sales"), 0);
-  const remaining = cigRetailTotal + salesTotal - profitTotal - cigExpTotal - salesExpTotal;
+  const daysTotal = cigRetailTotal + salesTotal + profitTotal;
+  const remaining = daysTotal - profitTotal - cigExpTotal - salesExpTotal;
 
   const saveCig = async (date: string, amount: number) => {
     const { error } = await supabase.from("cigarette_sales").upsert({ sale_date: date, retail_total: amount }, { onConflict: "sale_date" });
@@ -156,6 +147,18 @@ function TaqseematPage() {
     const { error } = await supabase.from("manual_sales").upsert({ sale_date: date, amount }, { onConflict: "sale_date" });
     if (error) return toast.error(error.message);
     toast.success("تم حفظ المبيعات");
+    refresh();
+  };
+  const saveProfit = async (date: string, amount: number) => {
+    const { error } = await (supabase as any).from("taqseemat_profits").upsert({ profit_date: date, amount }, { onConflict: "profit_date" });
+    if (error) return toast.error(error.message);
+    toast.success("تم حفظ الأرباح");
+    refresh();
+  };
+  const deleteProfit = async (date: string) => {
+    if (!window.confirm("حذف أرباح هذا اليوم؟")) return;
+    const { error } = await (supabase as any).from("taqseemat_profits").delete().eq("profit_date", date);
+    if (error) return toast.error(error.message);
     refresh();
   };
   const editValue = (label: string, cur: number, fn: (n: number) => void) => {
@@ -220,7 +223,7 @@ function TaqseematPage() {
     <AppShell title="تقسيمات">
       {/* Grand total */}
       <div className="rounded-2xl bg-gradient-primary text-white p-6 shadow-elevated mb-6 text-center">
-        <div className="text-sm opacity-90">المتبقي (قطاعي + مبيعات − أرباح − منصرفات){filtering ? " — للفترة المحددة" : ` — ${monthLabel(month)}`}</div>
+        <div className="text-sm opacity-90">المتبقي = إجمالي الأيام − الأرباح − منصرفات السجاير والمبيعات{filtering ? " — للفترة المحددة" : ` — ${monthLabel(month)}`}</div>
         <div className="mt-1 text-4xl font-extrabold tracking-tight">{EGP(remaining)}</div>
       </div>
 
@@ -228,40 +231,31 @@ function TaqseematPage() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-4">
         <StatCard label="قطاعي سجاير (قبل سحب الأرباح)" value={EGP(cigRetailTotal)} icon={Cigarette} variant="warning" hint="إدخال يدوي" />
         <StatCard label="إجمالي مبيعات" value={EGP(salesTotal)} icon={ShoppingBasket} variant="info" hint="إدخال يدوي" />
-        <StatCard label="إجمالي أرباح" value={EGP(profitTotal)} icon={Wallet} variant="success" hint="المأخوذ من الأرباح" />
+        <StatCard label="إجمالي أرباح" value={EGP(profitTotal)} icon={Wallet} variant="success" hint="إدخال يدوي" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-8">
-        <StatCard label="إجمالي منصرف سجاير" value={EGP(cigExpTotal)} icon={PiggyBank} variant="danger" hint="من الوارد" />
+        <StatCard label="إجمالي منصرف سجاير" value={EGP(cigExpTotal)} icon={PiggyBank} variant="danger" hint="إدخال يدوي" />
         <StatCard label="إجمالي منصرف مبيعات" value={EGP(salesExpTotal)} icon={PiggyBank} variant="danger" hint="إدخال يدوي" />
       </div>
 
       {/* Entry forms */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mb-8 no-print">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-4 mb-8 no-print">
         <div className="bg-card border border-border rounded-2xl p-5 shadow-card">
           <h3 className="font-bold mb-3 flex items-center gap-2"><Cigarette className="size-4" /> تسجيل قطاعي السجاير (يدوي)</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-end">
-            <label className="text-xs text-muted-foreground">التاريخ
-              <input type="date" value={cDate} onChange={(e) => setCDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
-            </label>
-            <label className="text-xs text-muted-foreground">قطاعي السجاير
-              <input type="number" min="0" value={cAmount} onChange={(e) => setCAmount(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" placeholder="0" />
-            </label>
-            <button onClick={async () => { if (!cDate) return toast.error("اختر التاريخ"); await saveCig(cDate, Number(cAmount) || 0); setCAmount(""); }} className="flex items-center justify-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-bold hover:opacity-90">
-              <Save className="size-4" /> حفظ
-            </button>
-          </div>
+...
           <p className="text-xs text-muted-foreground mt-2">نفس التاريخ يُحدَّث ولا يتكرر.</p>
         </div>
+
         <div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-          <h3 className="font-bold mb-3 flex items-center gap-2"><ShoppingBasket className="size-4" /> تسجيل مبيعات اليوم (يدوي)</h3>
+          <h3 className="font-bold mb-3 flex items-center gap-2"><Wallet className="size-4" /> تسجيل أرباح اليوم (يدوي)</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-end">
             <label className="text-xs text-muted-foreground">التاريخ
-              <input type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
+              <input type="date" value={pDate} onChange={(e) => setPDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
             </label>
-            <label className="text-xs text-muted-foreground">إجمالي المبيعات
-              <input type="number" min="0" value={sAmount} onChange={(e) => setSAmount(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" placeholder="0" />
+            <label className="text-xs text-muted-foreground">الأرباح
+              <input type="number" min="0" value={pAmount} onChange={(e) => setPAmount(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" placeholder="0" />
             </label>
-            <button onClick={saveManualSale} className="flex items-center justify-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-bold hover:opacity-90">
+            <button onClick={async () => { if (!pDate) return toast.error("اختر التاريخ"); await saveProfit(pDate, Number(pAmount) || 0); setPAmount(""); }} className="flex items-center justify-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-bold hover:opacity-90">
               <Save className="size-4" /> حفظ
             </button>
           </div>
@@ -269,7 +263,7 @@ function TaqseematPage() {
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-          <h3 className="font-bold mb-3 flex items-center gap-2"><Plus className="size-4" /> تسجيل منصرف مبيعات</h3>
+          <h3 className="font-bold mb-3 flex items-center gap-2"><Plus className="size-4" /> تسجيل منصرف</h3>
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 items-end">
             <label className="text-xs text-muted-foreground">التاريخ
               <input type="date" value={wDate} onChange={(e) => setWDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
@@ -277,6 +271,7 @@ function TaqseematPage() {
             <label className="text-xs text-muted-foreground">النوع
               <select value={wKind} onChange={(e) => setWKind(e.target.value as "cigarettes" | "sales")} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm">
                 <option value="sales">منصرف مبيعات</option>
+                <option value="cigarettes">منصرف سجاير</option>
               </select>
             </label>
             <label className="text-xs text-muted-foreground">المبلغ
@@ -346,10 +341,10 @@ function TaqseematPage() {
                 const cigRetail = cigByDate.get(d) ?? 0;
                 const salesRev = manualByDate.get(d) ?? 0;
                 const dayProfit = profitByDate.get(d) ?? 0;
-                const dayTotal = cigRetail + salesRev;
-                const purExp = purByDate.get(d) ?? 0;
+                const dayTotal = cigRetail + salesRev + dayProfit;
                 const hasCig = cigByDate.has(d);
                 const hasSales = manualByDate.has(d);
+                const hasProfit = profitByDate.has(d);
                 const cellBtns = (onEdit: () => void, onDel?: () => void) => (
                   <span className="inline-flex gap-1 ms-2 no-print">
                     <button onClick={onEdit} className="text-primary hover:opacity-70" aria-label="تعديل"><Pencil className="size-3.5" /></button>
@@ -363,11 +358,10 @@ function TaqseematPage() {
                     <td className="px-4 py-3 font-bold">{EGP(dayTotal)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{hasCig ? EGP(cigRetail) : "—"}{cellBtns(() => editValue("قطاعي السجاير", cigRetail, (n) => saveCig(d, n)), hasCig ? () => deleteCig(d) : undefined)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{hasSales ? EGP(salesRev) : "—"}{cellBtns(() => editValue("المبيعات", salesRev, (n) => saveSales(d, n)), hasSales ? () => deleteSales(d) : undefined)}</td>
-                    <td className="px-4 py-3 text-success font-bold">{dayProfit !== 0 ? EGP(dayProfit) : "—"}</td>
+                    <td className="px-4 py-3 text-success font-bold whitespace-nowrap">{hasProfit ? EGP(dayProfit) : "—"}{cellBtns(() => editValue("الأرباح", dayProfit, (n) => saveProfit(d, n)), hasProfit ? () => deleteProfit(d) : undefined)}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {purExp > 0 && <span className="inline-flex rounded-full bg-warning/20 px-2 py-0.5 text-xs font-bold" title="من الوارد">{NUM(purExp)} (وارد)</span>}
-                        {w.cigarettes.length === 0 && purExp === 0 && "—"}
+                        {w.cigarettes.length === 0 && "—"}
                         {w.cigarettes.map((x) => (
                           <span key={x.id} className="inline-flex items-center gap-1 rounded-full bg-warning/20 text-warning-foreground px-2 py-0.5 text-xs font-bold">
                             {NUM(Number(x.amount))}
@@ -403,7 +397,7 @@ function TaqseematPage() {
               <tfoot>
                 <tr className="bg-muted/60 font-extrabold">
                   <td className="px-4 py-3">الإجمالي</td>
-                  <td className="px-4 py-3">{EGP(cigRetailTotal + salesTotal)}</td>
+                  <td className="px-4 py-3">{EGP(daysTotal)}</td>
                   <td className="px-4 py-3">{EGP(cigRetailTotal)}</td>
                   <td className="px-4 py-3">{EGP(salesTotal)}</td>
                   <td className="px-4 py-3 text-success">{EGP(profitTotal)}</td>
