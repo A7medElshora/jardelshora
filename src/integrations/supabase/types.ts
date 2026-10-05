@@ -341,6 +341,30 @@ export type Database = {
           },
         ]
       }
+      taqseemat_profits: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          profit_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          profit_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          profit_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       taqseemat_withdrawals: {
         Row: {
           amount: number
