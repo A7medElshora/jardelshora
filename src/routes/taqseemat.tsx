@@ -149,6 +149,18 @@ function TaqseematPage() {
     toast.success("تم حفظ المبيعات");
     refresh();
   };
+  const saveProfit = async (date: string, amount: number) => {
+    const { error } = await (supabase as any).from("taqseemat_profits").upsert({ profit_date: date, amount }, { onConflict: "profit_date" });
+    if (error) return toast.error(error.message);
+    toast.success("تم حفظ الأرباح");
+    refresh();
+  };
+  const deleteProfit = async (date: string) => {
+    if (!window.confirm("حذف أرباح هذا اليوم؟")) return;
+    const { error } = await (supabase as any).from("taqseemat_profits").delete().eq("profit_date", date);
+    if (error) return toast.error(error.message);
+    refresh();
+  };
   const editValue = (label: string, cur: number, fn: (n: number) => void) => {
     const v = window.prompt(`تعديل ${label}`, String(cur));
     if (v === null) return;
