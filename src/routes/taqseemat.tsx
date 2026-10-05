@@ -239,32 +239,23 @@ function TaqseematPage() {
       </div>
 
       {/* Entry forms */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-3 mb-8 no-print">
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-4 mb-8 no-print">
         <div className="bg-card border border-border rounded-2xl p-5 shadow-card">
           <h3 className="font-bold mb-3 flex items-center gap-2"><Cigarette className="size-4" /> تسجيل قطاعي السجاير (يدوي)</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-end">
-            <label className="text-xs text-muted-foreground">التاريخ
-              <input type="date" value={cDate} onChange={(e) => setCDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
-            </label>
-            <label className="text-xs text-muted-foreground">قطاعي السجاير
-              <input type="number" min="0" value={cAmount} onChange={(e) => setCAmount(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" placeholder="0" />
-            </label>
-            <button onClick={async () => { if (!cDate) return toast.error("اختر التاريخ"); await saveCig(cDate, Number(cAmount) || 0); setCAmount(""); }} className="flex items-center justify-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-bold hover:opacity-90">
-              <Save className="size-4" /> حفظ
-            </button>
-          </div>
+...
           <p className="text-xs text-muted-foreground mt-2">نفس التاريخ يُحدَّث ولا يتكرر.</p>
         </div>
+
         <div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-          <h3 className="font-bold mb-3 flex items-center gap-2"><ShoppingBasket className="size-4" /> تسجيل مبيعات اليوم (يدوي)</h3>
+          <h3 className="font-bold mb-3 flex items-center gap-2"><Wallet className="size-4" /> تسجيل أرباح اليوم (يدوي)</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 items-end">
             <label className="text-xs text-muted-foreground">التاريخ
-              <input type="date" value={sDate} onChange={(e) => setSDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
+              <input type="date" value={pDate} onChange={(e) => setPDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
             </label>
-            <label className="text-xs text-muted-foreground">إجمالي المبيعات
-              <input type="number" min="0" value={sAmount} onChange={(e) => setSAmount(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" placeholder="0" />
+            <label className="text-xs text-muted-foreground">الأرباح
+              <input type="number" min="0" value={pAmount} onChange={(e) => setPAmount(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" placeholder="0" />
             </label>
-            <button onClick={saveManualSale} className="flex items-center justify-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-bold hover:opacity-90">
+            <button onClick={async () => { if (!pDate) return toast.error("اختر التاريخ"); await saveProfit(pDate, Number(pAmount) || 0); setPAmount(""); }} className="flex items-center justify-center gap-1 rounded-lg bg-primary text-primary-foreground px-3 py-2 text-sm font-bold hover:opacity-90">
               <Save className="size-4" /> حفظ
             </button>
           </div>
@@ -272,7 +263,7 @@ function TaqseematPage() {
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-5 shadow-card">
-          <h3 className="font-bold mb-3 flex items-center gap-2"><Plus className="size-4" /> تسجيل منصرف مبيعات</h3>
+          <h3 className="font-bold mb-3 flex items-center gap-2"><Plus className="size-4" /> تسجيل منصرف</h3>
           <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 items-end">
             <label className="text-xs text-muted-foreground">التاريخ
               <input type="date" value={wDate} onChange={(e) => setWDate(e.target.value)} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm" />
@@ -280,6 +271,7 @@ function TaqseematPage() {
             <label className="text-xs text-muted-foreground">النوع
               <select value={wKind} onChange={(e) => setWKind(e.target.value as "cigarettes" | "sales")} className="mt-1 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm">
                 <option value="sales">منصرف مبيعات</option>
+                <option value="cigarettes">منصرف سجاير</option>
               </select>
             </label>
             <label className="text-xs text-muted-foreground">المبلغ
