@@ -77,21 +77,21 @@ function TaqseematPage() {
   const [wKind, setWKind] = useState<"cigarettes" | "sales">("sales");
   const [wAmount, setWAmount] = useState("");
   const [wNote, setWNote] = useState("");
+  const [pDate, setPDate] = useState(todayISO());
+  const [pAmount, setPAmount] = useState("");
   const [month, setMonth] = useState(currentMonthKey());
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
   const manualQ = useQuery({ queryKey: ["manual-sales"], queryFn: listManualSales });
   const wQ = useQuery({ queryKey: ["taqseemat-withdrawals"], queryFn: listWithdrawals });
-  const profitQ = useQuery({ queryKey: ["taqseemat-profits"], queryFn: listProfitWithdrawals });
+  const profitQ = useQuery({ queryKey: ["taqseemat-profits"], queryFn: listTaqseematProfits });
   const cigQ = useQuery({ queryKey: ["taqseemat-cig"], queryFn: listCigSales });
-  const purQ = useQuery({ queryKey: ["taqseemat-purchases"], queryFn: () => listPurchases() });
 
   const manualSales = manualQ.data ?? [];
   const withdrawals = wQ.data ?? [];
   const profitWs = profitQ.data ?? [];
   const cigSales = cigQ.data ?? [];
-  const purchases = purQ.data ?? [];
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["manual-sales"] });
