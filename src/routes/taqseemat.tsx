@@ -223,7 +223,7 @@ function TaqseematPage() {
     <AppShell title="تقسيمات">
       {/* Grand total */}
       <div className="rounded-2xl bg-gradient-primary text-white p-6 shadow-elevated mb-6 text-center">
-        <div className="text-sm opacity-90">المتبقي (قطاعي + مبيعات − أرباح − منصرفات){filtering ? " — للفترة المحددة" : ` — ${monthLabel(month)}`}</div>
+        <div className="text-sm opacity-90">المتبقي = إجمالي الأيام − الأرباح − منصرفات السجاير والمبيعات{filtering ? " — للفترة المحددة" : ` — ${monthLabel(month)}`}</div>
         <div className="mt-1 text-4xl font-extrabold tracking-tight">{EGP(remaining)}</div>
       </div>
 
@@ -231,10 +231,10 @@ function TaqseematPage() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-4">
         <StatCard label="قطاعي سجاير (قبل سحب الأرباح)" value={EGP(cigRetailTotal)} icon={Cigarette} variant="warning" hint="إدخال يدوي" />
         <StatCard label="إجمالي مبيعات" value={EGP(salesTotal)} icon={ShoppingBasket} variant="info" hint="إدخال يدوي" />
-        <StatCard label="إجمالي أرباح" value={EGP(profitTotal)} icon={Wallet} variant="success" hint="المأخوذ من الأرباح" />
+        <StatCard label="إجمالي أرباح" value={EGP(profitTotal)} icon={Wallet} variant="success" hint="إدخال يدوي" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 mb-8">
-        <StatCard label="إجمالي منصرف سجاير" value={EGP(cigExpTotal)} icon={PiggyBank} variant="danger" hint="من الوارد" />
+        <StatCard label="إجمالي منصرف سجاير" value={EGP(cigExpTotal)} icon={PiggyBank} variant="danger" hint="إدخال يدوي" />
         <StatCard label="إجمالي منصرف مبيعات" value={EGP(salesExpTotal)} icon={PiggyBank} variant="danger" hint="إدخال يدوي" />
       </div>
 
