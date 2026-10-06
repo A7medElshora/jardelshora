@@ -180,6 +180,43 @@ function TaqseematPage() {
     if (error) return toast.error(error.message);
     refresh();
   };
+  const changeDate = async (d: string) => {
+    const nd = window.prompt("التاريخ الجديد (YYYY-MM-DD)", d);
+    if (!nd || nd === d) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(nd)) return toast.error("اكتب التاريخ بصيغة YYYY-MM-DD");
+    if ((cigByDate.has(d) && cigByDate.has(nd)) || (manualByDate.has(d) && manualByDate.has(nd)) || (profitByDate.has(d) && profitByDate.has(nd)))
+      return toast.error("التاريخ الجديد فيه بيانات بالفعل، عدّلها أو احذفها أولاً");
+    const sb = supabase as any;
+    const r = await Promise.all([
+      sb.from("cigarette_sales").update({ sale_date: nd }).eq("sale_date", d),
+      sb.from("manual_sales").update({ sale_date: nd }).eq("sale_date", d),
+      sb.from("taqseemat_profits").update({ profit_date: nd }).eq("profit_date", d),
+      sb.from("taqseemat_withdrawals").update({ entry_date: nd }).eq("entry_date", d),
+    ]);
+    const err = r.find((x: any) => x.error)?.error;
+    if (err) return toast.error(err.message);
+    toast.success("تم تعديل التاريخ");
+    refresh();
+  };
+  const [ndDate, setNdDate] = useState(todayISO());
+  const [ndCig, setNdCig] = useState("");
+  const [ndSales, setNdSales] = useState("");
+  const [ndProfit, setNdProfit] = useState("");
+  const addDay = async () => {
+    if (!ndDate) return toast.error("اختر التاريخ");
+    const sb = supabase as any;
+    const ops: any[] = [];
+    if (ndCig !== "") ops.push(sb.from("cigarette_sales").upsert({ sale_date: ndDate, retail_total: Number(ndCig) || 0 }, { onConflict: "sale_date" }));
+    if (ndSales !== "") ops.push(sb.from("manual_sales").upsert({ sale_date: ndDate, amount: Number(ndSales) || 0 }, { onConflict: "sale_date" }));
+    if (ndProfit !== "") ops.push(sb.from("taqseemat_profits").upsert({ profit_date: ndDate, amount: Number(ndProfit) || 0 }, { onConflict: "profit_date" }));
+    if (!ops.length) ops.push(sb.from("manual_sales").upsert({ sale_date: ndDate, amount: 0 }, { onConflict: "sale_date" }));
+    const r = await Promise.all(ops);
+    const err = r.find((x: any) => x.error)?.error;
+    if (err) return toast.error(err.message);
+    toast.success("تمت إضافة اليوم");
+    setNdCig(""); setNdSales(""); setNdProfit("");
+    refresh();
+  };
   const editWithdrawal = (x: Withdrawal) =>
     editValue("المنصرف", Number(x.amount), async (n) => {
       const { error } = await supabase.from("taqseemat_withdrawals").update({ amount: n }).eq("id", x.id);
@@ -320,6 +357,14 @@ function TaqseematPage() {
           <Layers className="size-5 text-primary" />
           <h3 className="font-bold">سجل التقسيمات اليومية{filtering ? " — الفترة المحددة" : ` — ${monthLabel(month)}`}</h3>
         </div>
+        <div className="px-5 py-3 border-b border-border flex flex-wrap items-end gap-3 no-print">
+          <div className="text-sm font-bold w-full">إضافة يوم جديد</div>
+          <div><label className="text-xs font-bold block mb-1">التاريخ</label><input type="date" value={ndDate} onChange={(e) => setNdDate(e.target.value)} className="h-10 rounded-lg border border-input bg-background px-3 text-sm" /></div>
+          <div><label className="text-xs font-bold block mb-1">السجاير</label><input type="number" min={0} value={ndCig} onChange={(e) => setNdCig(e.target.value)} className="h-10 w-28 rounded-lg border border-input bg-background px-3 text-sm" /></div>
+          <div><label className="text-xs font-bold block mb-1">باقي المبيعات</label><input type="number" min={0} value={ndSales} onChange={(e) => setNdSales(e.target.value)} className="h-10 w-28 rounded-lg border border-input bg-background px-3 text-sm" /></div>
+          <div><label className="text-xs font-bold block mb-1">الأرباح</label><input type="number" min={0} value={ndProfit} onChange={(e) => setNdProfit(e.target.value)} className="h-10 w-28 rounded-lg border border-input bg-background px-3 text-sm" /></div>
+          <button onClick={addDay} className="h-10 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-bold flex items-center gap-1"><Plus className="size-4" />إضافة اليوم</button>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -354,7 +399,7 @@ function TaqseematPage() {
                 const w = wByDate.get(d) ?? { cigarettes: [], sales: [] };
                 return (
                   <tr key={d} className="hover:bg-muted/30">
-                    <td className="px-4 py-3 font-bold whitespace-nowrap">{DATE_AR(d)}</td>
+                    <td className="px-4 py-3 font-bold whitespace-nowrap">{DATE_AR(d)}<button onClick={() => changeDate(d)} className="text-primary hover:opacity-70 ms-2 align-middle" aria-label="تعديل التاريخ"><Pencil className="size-3.5" /></button></td>
                     <td className="px-4 py-3 font-bold">{EGP(dayTotal)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{hasCig ? EGP(cigRetail) : "—"}{cellBtns(() => editValue("قطاعي السجاير", cigRetail, (n) => saveCig(d, n)), hasCig ? () => deleteCig(d) : undefined)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{hasSales ? EGP(salesRev) : "—"}{cellBtns(() => editValue("المبيعات", salesRev, (n) => saveSales(d, n)), hasSales ? () => deleteSales(d) : undefined)}</td>

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { supabase } from "@/integrations/supabase/client";
-import { listDailySales } from "@/lib/api";
+import { listDailySales, moveDailySalesDate } from "@/lib/api";
 import { EGP, DATE_AR, monthRange, todayISO } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Wallet, HandCoins, PiggyBank, Save, MinusCircle, Plus, Pencil, Trash2 } from "lucide-react";
@@ -118,6 +118,28 @@ function ProfitsPage() {
     qc.invalidateQueries({ queryKey: ["withdrawals"] });
   }
 
+  async function moveDate(d: string, nd: string) {
+    if (!nd || nd === d) return;
+    if (!window.confirm(`نقل أرباح ${d} إلى ${nd}؟`)) return;
+    try {
+      await moveDailySalesDate(d, nd);
+      const ws = wQ.data ?? [];
+      const src = ws.find((w) => w.profit_date === d);
+      if (src) {
+        const { data: dst } = await (supabase as any).from("profit_withdrawals").select("*").eq("profit_date", nd).maybeSingle();
+        if (dst) {
+          await (supabase as any).from("profit_withdrawals").update({ taken_amount: Number(dst.taken_amount) + Number(src.taken_amount) }).eq("id", dst.id);
+          await (supabase as any).from("profit_withdrawals").delete().eq("id", src.id);
+        } else {
+          await (supabase as any).from("profit_withdrawals").update({ profit_date: nd }).eq("id", src.id);
+        }
+      }
+      toast.success("تم تعديل التاريخ");
+      qc.invalidateQueries({ queryKey: ["sales"] });
+      qc.invalidateQueries({ queryKey: ["withdrawals"] });
+    } catch (e) { toast.error((e as Error).message); }
+  }
+
   return (
     <AppShell title="الأرباح">
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
@@ -152,7 +174,7 @@ function ProfitsPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {rows.map((r) => (
-                <Row key={r.date + (r.w?.taken_amount ?? "") + (r.w?.note ?? "")} date={r.date} profit={r.profit} w={r.w} onSave={save} />
+                <Row key={r.date + (r.w?.taken_amount ?? "") + (r.w?.note ?? "")} date={r.date} profit={r.profit} w={r.w} onSave={save} onMove={moveDate} />
               ))}
               {rows.length === 0 && (
                 <tr><td colSpan={6} className="px-3 py-10 text-center text-muted-foreground">لا توجد أرباح مسجلة في هذه الفترة.</td></tr>
@@ -214,14 +236,14 @@ function ProfitsPage() {
   );
 }
 
-function Row({ date, profit, w, onSave }: { date: string; profit: number; w?: Withdrawal; onSave: (d: string, t: number, n: string) => Promise<unknown> }) {
+function Row({ date, profit, w, onSave, onMove }: { date: string; profit: number; w?: Withdrawal; onSave: (d: string, t: number, n: string) => Promise<unknown>; onMove: (d: string, nd: string) => void }) {
   const [taken, setTaken] = useState(String(w?.taken_amount ?? 0));
   const [note, setNote] = useState(w?.note ?? "");
   const [busy, setBusy] = useState(false);
   const t = Number(taken) || 0;
   return (
     <tr className="hover:bg-muted/40">
-      <td className="px-3 py-2 font-bold">{DATE_AR(date)}</td>
+      <td className="px-3 py-2 font-bold"><input type="date" defaultValue={date} title={DATE_AR(date)} onChange={(e) => onMove(date, e.target.value)} className="h-9 rounded-lg border border-input bg-background px-2 text-sm" /></td>
       <td className="px-3 py-2 text-success font-bold">{EGP(profit)}</td>
       <td className="px-3 py-2">
         <input type="number" min={0} step="0.01" value={taken} onChange={(e) => setTaken(e.target.value)} className="h-9 w-28 rounded-lg border border-input bg-background px-2 text-sm" />

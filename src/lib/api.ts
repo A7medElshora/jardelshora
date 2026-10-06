@@ -233,3 +233,26 @@ export async function listPriceHistory(): Promise<PriceHistory[]> {
   if (error) throw error;
   return (data ?? []) as PriceHistory[];
 }
+
+/** نقل كل مبيعات يوم إلى تاريخ آخر (يدمج الكميات لو التاريخ الجديد فيه بيانات). لا يغيّر المخزون. */
+export async function moveDailySalesDate(fromDate: string, toDate: string) {
+  if (!toDate || fromDate === toDate) return;
+  const { data: src, error } = await supabase.from("daily_sales").select("*").eq("sale_date", fromDate);
+  if (error) throw error;
+  const { data: dst, error: e2 } = await supabase.from("daily_sales").select("*").eq("sale_date", toDate);
+  if (e2) throw e2;
+  const dstMap = new Map((dst ?? []).map((r: any) => [r.product_id, r]));
+  for (const r of (src ?? []) as any[]) {
+    const t: any = dstMap.get(r.product_id);
+    if (t) {
+      const { error: u } = await supabase.from("daily_sales")
+        .update({ quantity_sold: Number(t.quantity_sold) + Number(r.quantity_sold) }).eq("id", t.id);
+      if (u) throw u;
+      const { error: d } = await supabase.from("daily_sales").delete().eq("id", r.id);
+      if (d) throw d;
+    } else {
+      const { error: u } = await supabase.from("daily_sales").update({ sale_date: toDate }).eq("id", r.id);
+      if (u) throw u;
+    }
+  }
+}
