@@ -1,0 +1,2 @@
+- [x] Synchronize moved daily cards with all consumer-column values and destination week.
+- [ ] Redesign the dashboard after visual direction selection.

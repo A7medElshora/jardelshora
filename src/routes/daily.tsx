@@ -9,7 +9,17 @@ import { ChevronLeft, ChevronRight, AlertTriangle, FileSpreadsheet, Printer } fr
 import { toast } from "sonner";
 import { exportToExcel, printElement } from "@/lib/export";
 
-export const Route = createFileRoute("/daily")({ component: DailyPage });
+export const Route = createFileRoute("/daily")({
+  component: DailyPage,
+  head: () => ({ meta: [
+    { title: "الجرد اليومي | الشوره ماركت" },
+    { name: "description", content: "جرد الأصناف ومستهلك كل يوم مع المبيعات والأرباح حسب التاريخ." },
+    { property: "og:title", content: "الجرد اليومي | الشوره ماركت" },
+    { property: "og:description", content: "متابعة مستهلك الأيام والمبيعات والأرباح في الشوره ماركت." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
+});
 
 function DailyPage() {
   const [refDate, setRefDate] = useState<Date>(new Date());
@@ -21,6 +31,7 @@ function DailyPage() {
   const salesQ = useQuery({ queryKey: ["sales", from, to], queryFn: () => listDailySales(from, to) });
 
   const qc = useQueryClient();
+  const [movingDay, setMovingDay] = useState(false);
   const mut = useMutation({
     mutationFn: setDailySale,
     onSuccess: () => {
@@ -62,12 +73,16 @@ function DailyPage() {
 
   async function moveDay(fromD: string, toD: string) {
     if (!toD || toD === fromD) return;
-    if (!window.confirm(`نقل مبيعات ${fromD} إلى ${toD}؟`)) return;
+    if (movingDay) return;
+    if (!window.confirm(`نقل كارت اليوم وعمود المستهلك بكل الأصناف من ${fromD} إلى ${toD}؟`)) return;
+    setMovingDay(true);
     try {
       await moveDailySalesDate(fromD, toD);
-      toast.success("تم نقل مبيعات اليوم إلى التاريخ الجديد");
-      qc.invalidateQueries({ queryKey: ["sales"] });
+      await qc.invalidateQueries({ queryKey: ["sales"] });
+      setRefDate(new Date(`${toD}T12:00:00`));
+      toast.success("تم نقل كارت اليوم وعمود المستهلك بالكامل دون تغيير المخزون");
     } catch (e) { toast.error((e as Error).message); }
+    finally { setMovingDay(false); }
   }
 
   function shiftWeek(delta: number) {
@@ -85,7 +100,7 @@ function DailyPage() {
         "سعر القطاعي": Number(p.retail_price),
       };
       weekDates.forEach((d, i) => {
-        row[WEEK_DAYS_AR[i]] = getSold(p, d);
+        row[`${WEEK_DAYS_AR[i]} ${d}`] = getSold(p, d);
       });
       return row;
     });
@@ -133,7 +148,10 @@ function DailyPage() {
                 <tr className="bg-secondary/60 text-xs">
                   <th colSpan={5}></th>
                   {WEEK_DAYS_AR.map((d, i) => (
-                    <th key={d} className={`px-2 py-2 text-center whitespace-nowrap ${i === 0 ? "border-r border-border" : ""}`}>{d}</th>
+                    <th key={d} className={`px-2 py-2 text-center whitespace-nowrap ${i === 0 ? "border-r border-border" : ""}`}>
+                      {d}
+                      <div className="mt-1 text-[10px] font-normal" dir="ltr">{weekDates[i]}</div>
+                    </th>
                   ))}
                   <th colSpan={3} className="border-r border-border"></th>
                 </tr>
@@ -163,7 +181,9 @@ function DailyPage() {
                       {weekDates.map((d, i) => (
                         <td key={d} className={`px-1 py-1 text-center ${i === 0 ? "border-r border-border" : ""}`}>
                           <input
+                            key={`${d}-${getSold(p, d)}`}
                             type="number"
+                            disabled={movingDay}
                             min={0}
                             defaultValue={getSold(p, d)}
                             onBlur={(e) => {
@@ -193,7 +213,7 @@ function DailyPage() {
           {dayTotals.map((dt, i) => (
             <div key={dt.date} className="bg-card border border-border rounded-2xl p-4 shadow-card">
               <div className="text-xs text-muted-foreground font-bold">{WEEK_DAYS_AR[i]}</div>
-              <input type="date" defaultValue={dt.date} key={dt.date} title="تغيير تاريخ مبيعات هذا اليوم" onChange={(e) => moveDay(dt.date, e.target.value)} className="no-print text-[11px] mb-3 h-7 w-full rounded border border-input bg-background px-1" />
+              <input type="date" value={dt.date} disabled={movingDay} title="تغيير تاريخ مبيعات هذا اليوم" onChange={(e) => moveDay(dt.date, e.target.value)} className="no-print text-[11px] mb-3 h-7 w-full rounded border border-input bg-background px-1" />
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between rounded-md bg-gradient-success text-success-foreground px-2.5 py-1.5">
                   <span>قطاعي</span>
