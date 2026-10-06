@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { listProducts, listDailySales, setDailySale, type DailySale, type Product } from "@/lib/api";
+import { listProducts, listDailySales, setDailySale, moveDailySalesDate, type DailySale, type Product } from "@/lib/api";
 import { EGP, NUM, WEEK_DAYS_AR, getWeekDates } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, AlertTriangle, FileSpreadsheet, Printer } from "lucide-react";
@@ -59,6 +59,16 @@ function DailyPage() {
     }
     return { date: d, qty, revenue, cost, profit: revenue - cost };
   });
+
+  async function moveDay(fromD: string, toD: string) {
+    if (!toD || toD === fromD) return;
+    if (!window.confirm(`نقل مبيعات ${fromD} إلى ${toD}؟`)) return;
+    try {
+      await moveDailySalesDate(fromD, toD);
+      toast.success("تم نقل مبيعات اليوم إلى التاريخ الجديد");
+      qc.invalidateQueries({ queryKey: ["sales"] });
+    } catch (e) { toast.error((e as Error).message); }
+  }
 
   function shiftWeek(delta: number) {
     const d = new Date(refDate);
@@ -183,7 +193,7 @@ function DailyPage() {
           {dayTotals.map((dt, i) => (
             <div key={dt.date} className="bg-card border border-border rounded-2xl p-4 shadow-card">
               <div className="text-xs text-muted-foreground font-bold">{WEEK_DAYS_AR[i]}</div>
-              <div className="text-[11px] text-muted-foreground mb-3">{dt.date}</div>
+              <input type="date" defaultValue={dt.date} key={dt.date} title="تغيير تاريخ مبيعات هذا اليوم" onChange={(e) => moveDay(dt.date, e.target.value)} className="no-print text-[11px] mb-3 h-7 w-full rounded border border-input bg-background px-1" />
               <div className="space-y-1.5 text-xs">
                 <div className="flex items-center justify-between rounded-md bg-gradient-success text-success-foreground px-2.5 py-1.5">
                   <span>قطاعي</span>
