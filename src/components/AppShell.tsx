@@ -110,21 +110,55 @@ export function AppShell({ children, title }: { children: ReactNode; title: stri
 
       {/* Main */}
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="no-print sticky top-0 z-20 bg-background/80 backdrop-blur border-b border-border">
-          <div className="flex items-center gap-3 px-4 lg:px-8 py-3">
+        <header className="no-print sticky top-0 z-20 bg-background/85 backdrop-blur-md border-b border-border/80 shadow-xs">
+          <div className="flex items-center gap-3 px-4 lg:px-8 py-2.5">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden text-foreground hover:bg-muted"
               onClick={() => setOpen(true)}
               aria-label="فتح القائمة"
             >
               <Menu className="size-5" />
             </Button>
-            <h1 className="text-lg lg:text-xl font-bold tracking-tight">{title}</h1>
-            <div className="ms-auto flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="hidden sm:inline">مرحباً، المشرف</span>
-              <span className="size-8 rounded-full bg-gradient-primary text-white grid place-items-center text-xs font-bold">A</span>
+            
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg lg:text-xl font-extrabold tracking-tight text-foreground">{title}</h1>
+              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="relative flex size-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full size-2 bg-emerald-500"></span>
+                </span>
+                <span>النظام متصل</span>
+              </div>
+            </div>
+
+            <div className="ms-auto flex items-center gap-2">
+              <Link
+                to="/cashier"
+                className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
+              >
+                <ScanBarcode className="size-4" />
+                <span>الكاشير السريع</span>
+              </Link>
+
+              <button
+                onClick={toggle}
+                className="size-9 rounded-xl border border-border/80 bg-card hover:bg-muted grid place-items-center text-muted-foreground hover:text-foreground transition-colors"
+                title={theme === "dark" ? "التحويل للوضع الفاتح" : "التحويل للوضع الداكن"}
+              >
+                {theme === "dark" ? <Sun className="size-4 text-amber-400" /> : <Moon className="size-4" />}
+              </button>
+
+              <div className="flex items-center gap-2 ps-2 border-s border-border">
+                <div className="hidden sm:block text-start leading-tight">
+                  <div className="text-xs font-bold text-foreground">المشرف</div>
+                  <div className="text-[10px] text-muted-foreground">مدير النظام</div>
+                </div>
+                <div className="size-8 rounded-xl bg-gradient-primary text-white grid place-items-center text-xs font-extrabold shadow-sm">
+                  A
+                </div>
+              </div>
             </div>
           </div>
         </header>
