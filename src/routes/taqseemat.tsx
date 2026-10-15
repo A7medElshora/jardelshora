@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { supabase } from "@/integrations/supabase/client";
 import { EGP, NUM, DATE_AR, todayISO } from "@/lib/format";
-import { Cigarette, ShoppingBasket, Wallet, Layers, Plus, Trash2, Save, ChevronRight, ChevronLeft, X, Pencil, PiggyBank } from "lucide-react";
+import { Cigarette, ShoppingBasket, Wallet, Layers, Plus, Trash2, Save, ChevronRight, ChevronLeft, X, Pencil, PiggyBank, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/taqseemat")({
@@ -256,6 +256,246 @@ function TaqseematPage() {
     refresh();
   };
 
+  const exportTaqseematPDF = () => {
+    if (dates.length === 0) {
+      toast.error("لا توجد بيانات لتصديرها كـ PDF");
+      return;
+    }
+
+    const printWin = window.open("", "_blank", "width=1000,height=800");
+    if (!printWin) {
+      toast.error("يرجى السماح بالنوافذ المنبثقة لإنشاء ملف الـ PDF");
+      return;
+    }
+
+    const periodText = filtering
+      ? `الفترة من ${from || "البداية"} إلى ${to || "اليوم"}`
+      : `شهر ${monthLabel(month)}`;
+
+    const todayDate = new Date().toLocaleDateString("ar-EG", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const rowsHtml = dates
+      .map((d, idx) => {
+        const cigRetail = cigByDate.get(d) ?? 0;
+        const salesRev = manualByDate.get(d) ?? 0;
+        const dayProfit = profitByDate.get(d) ?? 0;
+        const dayTotal = cigRetail + salesRev + dayProfit;
+        const hasCig = cigByDate.has(d);
+        const hasSales = manualByDate.has(d);
+        const hasProfit = profitByDate.has(d);
+        const w = wByDate.get(d) ?? { cigarettes: [], sales: [] };
+
+        const cigWStr = w.cigarettes.length === 0
+          ? "—"
+          : w.cigarettes.map((x) => `${NUM(Number(x.amount))}${x.note ? ` (${x.note})` : ""}`).join(" ، ");
+
+        const salesWStr = w.sales.length === 0
+          ? "—"
+          : w.sales.map((x) => `${NUM(Number(x.amount))}${x.note ? ` (${x.note})` : ""}`).join(" ، ");
+
+        return `
+          <tr style="background:${idx % 2 === 0 ? "#ffffff" : "#f8fafc"};">
+            <td style="padding:8px 10px; font-weight:700; border-bottom:1px solid #e2e8f0; white-space:nowrap;">${DATE_AR(d)}</td>
+            <td style="padding:8px 10px; font-weight:800; border-bottom:1px solid #e2e8f0; color:#0f172a;">${EGP(dayTotal)}</td>
+            <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0;">${hasCig ? EGP(cigRetail) : "—"}</td>
+            <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0;">${hasSales ? EGP(salesRev) : "—"}</td>
+            <td style="padding:8px 10px; font-weight:700; border-bottom:1px solid #e2e8f0; color:#16a34a;">${hasProfit ? EGP(dayProfit) : "—"}</td>
+            <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0; font-size:11px; color:#d97706;">${cigWStr}</td>
+            <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0; font-size:11px; color:#0284c7;">${salesWStr}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    printWin.document.write(`
+      <!doctype html>
+      <html lang="ar" dir="rtl">
+        <head>
+          <meta charset="utf-8">
+          <title>سجل_التقسيمات_${periodText.replace(/\\s+/g, "_")}</title>
+          <style>
+            @page {
+              size: A4 landscape;
+              margin: 12mm;
+            }
+            body {
+              font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+              color: #0f172a;
+              background: #fff;
+              margin: 0;
+              padding: 16px;
+              direction: rtl;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #0f766e;
+              padding-bottom: 12px;
+              margin-bottom: 16px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 20px;
+              font-weight: 900;
+              color: #0f766e;
+            }
+            .header p {
+              margin: 4px 0 0;
+              font-size: 12px;
+              color: #64748b;
+            }
+            .stats-bar {
+              display: flex;
+              gap: 10px;
+              margin-bottom: 16px;
+            }
+            .stat-box {
+              flex: 1;
+              padding: 10px 12px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              text-align: center;
+            }
+            .stat-title {
+              font-size: 11px;
+              color: #64748b;
+              font-weight: bold;
+              margin-bottom: 2px;
+            }
+            .stat-val {
+              font-size: 14px;
+              font-weight: 800;
+              color: #0f172a;
+            }
+            .stat-highlight {
+              background: #0f766e;
+              color: #fff;
+              border-color: #0f766e;
+            }
+            .stat-highlight .stat-title {
+              color: rgba(255,255,255,0.85);
+            }
+            .stat-highlight .stat-val {
+              color: #fff;
+              font-size: 16px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 12px;
+              border: 1px solid #cbd5e1;
+              border-radius: 8px;
+              overflow: hidden;
+            }
+            th {
+              background: #0f766e;
+              color: #ffffff;
+              padding: 10px 8px;
+              font-weight: 800;
+              text-align: right;
+            }
+            tfoot tr {
+              background: #e2e8f0;
+              font-weight: 900;
+            }
+            tfoot td {
+              padding: 10px 8px;
+              border-top: 2px solid #cbd5e1;
+            }
+            .footer {
+              margin-top: 20px;
+              text-align: center;
+              font-size: 11px;
+              color: #94a3b8;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 8px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>الشوره ماركت — سجل التقسيمات اليومية</h1>
+            <p>${periodText} — تاريخ الطباعة: ${todayDate}</p>
+          </div>
+
+          <div class="stats-bar">
+            <div class="stat-box stat-highlight">
+              <div class="stat-title">المتبقي (الصافي)</div>
+              <div class="stat-val">${EGP(remaining)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-title">إجمالي الأيام</div>
+              <div class="stat-val">${EGP(daysTotal)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-title">قطاعي السجاير</div>
+              <div class="stat-val">${EGP(cigRetailTotal)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-title">المبيعات</div>
+              <div class="stat-val">${EGP(salesTotal)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-title">الأرباح</div>
+              <div class="stat-val" style="color:#16a34a;">${EGP(profitTotal)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-title">منصرف سجاير</div>
+              <div class="stat-val" style="color:#d97706;">${EGP(cigExpTotal)}</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-title">منصرف مبيعات</div>
+              <div class="stat-val" style="color:#0284c7;">${EGP(salesExpTotal)}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>إجمالي اليوم</th>
+                <th>السجاير</th>
+                <th>باقي المبيعات</th>
+                <th>الأرباح</th>
+                <th>منصرف سجاير</th>
+                <th>منصرف مبيعات</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>الإجمالي</td>
+                <td>${EGP(daysTotal)}</td>
+                <td>${EGP(cigRetailTotal)}</td>
+                <td>${EGP(salesTotal)}</td>
+                <td style="color:#16a34a;">${EGP(profitTotal)}</td>
+                <td style="color:#d97706;">${EGP(cigExpTotal)}</td>
+                <td style="color:#0284c7;">${EGP(salesExpTotal)}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="footer">
+            تم استخراج هذا التقرير آلياً من نظام إدارة الشوره ماركت
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
+  };
+
   return (
     <AppShell title="تقسيمات">
       {/* Grand total */}
@@ -353,9 +593,18 @@ function TaqseematPage() {
 
       {/* Table */}
       <div className="bg-card border border-border rounded-2xl shadow-card overflow-hidden">
-        <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-          <Layers className="size-5 text-primary" />
-          <h3 className="font-bold">سجل التقسيمات اليومية{filtering ? " — الفترة المحددة" : ` — ${monthLabel(month)}`}</h3>
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Layers className="size-5 text-primary" />
+            <h3 className="font-bold">سجل التقسيمات اليومية{filtering ? " — الفترة المحددة" : ` — ${monthLabel(month)}`}</h3>
+          </div>
+          <button
+            onClick={exportTaqseematPDF}
+            className="flex items-center gap-1.5 text-xs font-bold bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-xl transition-all shadow-sm no-print"
+          >
+            <FileDown className="size-4" />
+            <span>تصدير PDF</span>
+          </button>
         </div>
         <div className="px-5 py-3 border-b border-border flex flex-wrap items-end gap-3 no-print">
           <div className="text-sm font-bold w-full">إضافة يوم جديد</div>
