@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo, type FormEvent } from "react";
+import React, { useState, useMemo, type FormEvent } from "react";
 import { AppShell } from "@/components/AppShell";
 import { listProducts, listPurchases, addPurchase, createProduct, deletePurchase } from "@/lib/api";
 import { EGP, NUM, todayISO, DATE_AR } from "@/lib/format";
@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, FileSpreadsheet, Printer, Info, Calculator, Filter, Calendar, User, Search, FileDown } from "lucide-react";
+import { Plus, Trash2, FileSpreadsheet, Printer, Info, Calculator, Filter, Calendar, User, Search, FileDown, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { exportToExcel, printElement } from "@/lib/export";
 
@@ -43,6 +43,7 @@ function PurchasesPage() {
   const [summaryDate, setSummaryDate] = useState(todayISO());
   const [summarySupplier, setSummarySupplier] = useState("");
   const [summarySearch, setSummarySearch] = useState("");
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
 
   // قائمة الموردين والتواريخ المميزة
   const uniqueSuppliers = useMemo(() => {
@@ -81,13 +82,22 @@ function PurchasesPage() {
         entriesCount: number;
         suppliers: Set<string>;
         dates: Set<string>;
+        records: Array<{
+          id: string;
+          date: string;
+          qty: number;
+          price: number;
+          total: number;
+          supplier: string;
+        }>;
       }
     >();
 
     for (const p of filtered) {
       const prodName = pmap.get(p.product_id)?.name || "صنف غير معروف";
       const q = Number(p.quantity) || 0;
-      const cost = q * (Number(p.wholesale_price) || 0);
+      const price = Number(p.wholesale_price) || 0;
+      const cost = q * price;
 
       const existing = groupMap.get(p.product_id) || {
         productId: p.product_id,
@@ -97,6 +107,7 @@ function PurchasesPage() {
         entriesCount: 0,
         suppliers: new Set<string>(),
         dates: new Set<string>(),
+        records: [],
       };
 
       existing.totalQty += q;
@@ -104,6 +115,14 @@ function PurchasesPage() {
       existing.entriesCount += 1;
       if (p.supplier?.trim()) existing.suppliers.add(p.supplier.trim());
       if (p.purchase_date) existing.dates.add(p.purchase_date);
+      existing.records.push({
+        id: p.id,
+        date: p.purchase_date,
+        qty: q,
+        price: price,
+        total: cost,
+        supplier: p.supplier || "—",
+      });
 
       groupMap.set(p.product_id, existing);
     }
@@ -544,47 +563,96 @@ function PurchasesPage() {
                 <thead className="bg-muted text-muted-foreground sticky top-0 font-bold border-b border-border">
                   <tr>
                     <th className="py-2.5 px-4 text-start">الصنف</th>
-                    <th className="py-2.5 px-3 text-center">إجمالي العدد (الكمية)</th>
-                    <th className="py-2.5 px-3 text-center">متوسط سعر التكلفة</th>
-                    <th className="py-2.5 px-4 text-start">إجمالي المبلغ الكلي</th>
+                    <th className="py-2.5 px-3 text-center">إجمالي العدد</th>
+                    <th className="py-2.5 px-4 text-center">متوسط سعر الجملة</th>
+                    <th className="py-2.5 px-4 text-center">إجمالي المبلغ الكلي</th>
                     <th className="py-2.5 px-3 text-center">عدد العمليات</th>
                     <th className="py-2.5 px-4 text-start">
-                      {summaryFilterType === "supplier" ? "التواريخ" : "المورد / جهة الشراء"}
+                      {summaryFilterType === "supplier" ? "التواريخ" : "جهة الشراء / المورد"}
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {aggregatedSummary.map((item, idx) => (
-                    <tr key={item.productId} className="hover:bg-muted/40 transition-colors">
-                      <td className="py-3 px-4 font-bold text-foreground">
-                        <div className="flex items-center gap-2">
-                          <span className="size-5 rounded-full bg-primary/10 text-primary text-[10px] font-black grid place-items-center shrink-0">
-                            {idx + 1}
-                          </span>
-                          <span>{item.productName}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-black text-xs">
-                          {NUM(item.totalQty)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-center text-muted-foreground font-semibold">
-                        {EGP(item.avgPrice)}
-                      </td>
-                      <td className="py-3 px-4 font-black text-emerald-700 dark:text-emerald-300 text-sm">
-                        {EGP(item.totalCost)}
-                      </td>
-                      <td className="py-3 px-3 text-center text-xs text-muted-foreground">
-                        {item.entriesCount} مرة
-                      </td>
-                      <td className="py-3 px-4 text-xs text-muted-foreground max-w-xs truncate">
-                        {summaryFilterType === "supplier"
-                          ? Array.from(item.dates).map((d) => DATE_AR(d)).join(" ، ") || "—"
-                          : Array.from(item.suppliers).join(" ، ") || "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {aggregatedSummary.map((item, idx) => {
+                    const isExpanded = expandedProductId === item.productId;
+                    return (
+                      <React.Fragment key={item.productId}>
+                        <tr
+                          onClick={() => setExpandedProductId(isExpanded ? null : item.productId)}
+                          className="hover:bg-muted/40 transition-colors cursor-pointer"
+                        >
+                          <td className="py-3 px-4 font-bold text-foreground">
+                            <div className="flex items-center gap-2">
+                              <span className="size-5 rounded-full bg-primary/10 text-primary text-[10px] font-black grid place-items-center shrink-0">
+                                {idx + 1}
+                              </span>
+                              <span>{item.productName}</span>
+                              <span className="text-muted-foreground me-1 no-print">
+                                {isExpanded ? <ChevronUp className="size-3.5 inline" /> : <ChevronDown className="size-3.5 inline" />}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-black text-xs">
+                              {NUM(item.totalQty)}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-center font-bold text-foreground">
+                            {EGP(item.avgPrice)}
+                          </td>
+                          <td className="py-3 px-4 text-center font-black text-emerald-700 dark:text-emerald-300 text-sm">
+                            {EGP(item.totalCost)}
+                          </td>
+                          <td className="py-3 px-3 text-center text-xs text-muted-foreground font-semibold">
+                            {item.entriesCount} مرة
+                          </td>
+                          <td className="py-3 px-4 text-xs text-muted-foreground max-w-xs truncate">
+                            {summaryFilterType === "supplier"
+                              ? Array.from(item.dates).map((d) => DATE_AR(d)).join(" ، ") || "—"
+                              : Array.from(item.suppliers).join(" ، ") || "—"}
+                          </td>
+                        </tr>
+
+                        {/* تفاصيل العمليات الفردية عند الضغط على الصنف */}
+                        {isExpanded && (
+                          <tr className="bg-muted/30">
+                            <td colSpan={6} className="p-3 px-6">
+                              <div className="bg-card border border-border rounded-xl p-3 shadow-inner space-y-2">
+                                <div className="text-xs font-bold text-foreground flex items-center justify-between">
+                                  <span>تفاصيل حركات الشراء المسجلة لـ: {item.productName} ({item.records.length} حركة)</span>
+                                  <span className="text-[11px] text-muted-foreground">
+                                    المجموع: {NUM(item.totalQty)} علبة بقيمة {EGP(item.totalCost)}
+                                  </span>
+                                </div>
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b border-border text-muted-foreground">
+                                      <th className="py-1 px-2 text-start">التاريخ</th>
+                                      <th className="py-1 px-2 text-center">الكمية المسجلة</th>
+                                      <th className="py-1 px-2 text-center">سعر الشراء المسجل</th>
+                                      <th className="py-1 px-2 text-center">الإجمالي (الكمية × السعر)</th>
+                                      <th className="py-1 px-2 text-start">جهة الشراء</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-border/60">
+                                    {item.records.map((r, rIdx) => (
+                                      <tr key={r.id || rIdx} className="hover:bg-muted/40">
+                                        <td className="py-1.5 px-2 font-semibold">{DATE_AR(r.date)}</td>
+                                        <td className="py-1.5 px-2 text-center font-bold text-primary">{NUM(r.qty)}</td>
+                                        <td className="py-1.5 px-2 text-center font-semibold text-foreground">{EGP(r.price)}</td>
+                                        <td className="py-1.5 px-2 text-center font-bold text-emerald-700 dark:text-emerald-300">{EGP(r.total)}</td>
+                                        <td className="py-1.5 px-2 text-muted-foreground">{r.supplier}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
 
                   {aggregatedSummary.length === 0 && (
                     <tr>
@@ -601,8 +669,8 @@ function PurchasesPage() {
                       <td className="py-3.5 px-3 text-center text-primary text-base">
                         {NUM(summaryGrandQty)}
                       </td>
-                      <td className="py-3.5 px-3 text-center text-muted-foreground text-xs">—</td>
-                      <td className="py-3.5 px-4 text-emerald-700 dark:text-emerald-300 text-base">
+                      <td className="py-3.5 px-4 text-center text-muted-foreground text-xs">—</td>
+                      <td className="py-3.5 px-4 text-center text-emerald-700 dark:text-emerald-300 text-base">
                         {EGP(summaryGrandCost)}
                       </td>
                       <td colSpan={2} className="py-3.5 px-4 text-xs text-muted-foreground">
