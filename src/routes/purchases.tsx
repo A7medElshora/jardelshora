@@ -1,11 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useState, useMemo, type FormEvent } from "react";
 import { AppShell } from "@/components/AppShell";
 import { listProducts, listPurchases, addPurchase, createProduct, deletePurchase } from "@/lib/api";
 import { EGP, NUM, todayISO, DATE_AR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, FileSpreadsheet, Printer, Info } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Plus, Trash2, FileSpreadsheet, Printer, Info, Calculator, Filter, Calendar, User, Search, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { exportToExcel, printElement } from "@/lib/export";
 
@@ -29,6 +36,93 @@ function PurchasesPage() {
   });
   const periodTotal = purchases.reduce((sum, p) => sum + Number(p.quantity) * Number(p.wholesale_price), 0);
   const periodQty = purchases.reduce((sum, p) => sum + Number(p.quantity), 0);
+
+  // نافذة إجماليات الأصناف
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [summaryFilterType, setSummaryFilterType] = useState<"all" | "date" | "supplier">("all");
+  const [summaryDate, setSummaryDate] = useState(todayISO());
+  const [summarySupplier, setSummarySupplier] = useState("");
+  const [summarySearch, setSummarySearch] = useState("");
+
+  // قائمة الموردين والتواريخ المميزة
+  const uniqueSuppliers = useMemo(() => {
+    const s = new Set<string>();
+    for (const p of allPurchases) {
+      if (p.supplier?.trim()) s.add(p.supplier.trim());
+    }
+    return Array.from(s).sort((a, b) => a.localeCompare(b, "ar"));
+  }, [allPurchases]);
+
+  const uniqueDates = useMemo(() => {
+    const s = new Set<string>();
+    for (const p of allPurchases) {
+      if (p.purchase_date) s.add(p.purchase_date);
+    }
+    return Array.from(s).sort((a, b) => b.localeCompare(a));
+  }, [allPurchases]);
+
+  // تجميع وحساب إجماليات الأصناف وفقاً للفلتر المختار
+  const aggregatedSummary = useMemo(() => {
+    let filtered = allPurchases;
+
+    if (summaryFilterType === "date" && summaryDate) {
+      filtered = filtered.filter((p) => p.purchase_date === summaryDate);
+    } else if (summaryFilterType === "supplier" && summarySupplier) {
+      filtered = filtered.filter((p) => (p.supplier?.trim() || "") === summarySupplier.trim());
+    }
+
+    const groupMap = new Map<
+      string,
+      {
+        productId: string;
+        productName: string;
+        totalQty: number;
+        totalCost: number;
+        entriesCount: number;
+        suppliers: Set<string>;
+        dates: Set<string>;
+      }
+    >();
+
+    for (const p of filtered) {
+      const prodName = pmap.get(p.product_id)?.name || "صنف غير معروف";
+      const q = Number(p.quantity) || 0;
+      const cost = q * (Number(p.wholesale_price) || 0);
+
+      const existing = groupMap.get(p.product_id) || {
+        productId: p.product_id,
+        productName: prodName,
+        totalQty: 0,
+        totalCost: 0,
+        entriesCount: 0,
+        suppliers: new Set<string>(),
+        dates: new Set<string>(),
+      };
+
+      existing.totalQty += q;
+      existing.totalCost += cost;
+      existing.entriesCount += 1;
+      if (p.supplier?.trim()) existing.suppliers.add(p.supplier.trim());
+      if (p.purchase_date) existing.dates.add(p.purchase_date);
+
+      groupMap.set(p.product_id, existing);
+    }
+
+    let result = Array.from(groupMap.values()).map((item) => ({
+      ...item,
+      avgPrice: item.totalQty > 0 ? item.totalCost / item.totalQty : 0,
+    }));
+
+    if (summarySearch.trim()) {
+      const q = summarySearch.trim().toLowerCase();
+      result = result.filter((item) => item.productName.toLowerCase().includes(q));
+    }
+
+    return result.sort((a, b) => b.totalCost - a.totalCost);
+  }, [allPurchases, summaryFilterType, summaryDate, summarySupplier, summarySearch, pmap]);
+
+  const summaryGrandQty = aggregatedSummary.reduce((s, i) => s + i.totalQty, 0);
+  const summaryGrandCost = aggregatedSummary.reduce((s, i) => s + i.totalCost, 0);
 
   const [form, setForm] = useState({
     purchase_date: todayISO(),
@@ -200,7 +294,20 @@ function PurchasesPage() {
                 <Button variant="ghost" size="sm" onClick={() => { setFilterFrom(""); setFilterTo(""); }}>إظهار الكل</Button>
               )}
             </div>
-            <div className="ms-auto flex gap-2">
+            <div className="ms-auto flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSummaryFilterType("all");
+                  setSummarySearch("");
+                  setIsSummaryOpen(true);
+                }}
+                className="bg-primary/5 border-primary/30 text-primary hover:bg-primary/10 font-bold"
+              >
+                <Calculator className="size-4 ms-1" />
+                إجماليات الأصناف
+              </Button>
               <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="size-4 ms-1" />Excel</Button>
               <Button variant="outline" size="sm" onClick={() => printElement(document.getElementById("purch-print"))}><Printer className="size-4 ms-1" />طباعة</Button>
             </div>
@@ -252,6 +359,276 @@ function PurchasesPage() {
           </div>
         </div>
       </div>
+
+      {/* DIALOG: Product Totals Summary (إجماليات الأصناف المجمعة) */}
+      <Dialog open={isSummaryOpen} onOpenChange={setIsSummaryOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 rounded-3xl overflow-hidden" dir="rtl">
+          <DialogHeader className="p-5 border-b border-border bg-card shrink-0 text-start">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-2xl bg-primary/10 text-primary grid place-items-center shrink-0">
+                  <Calculator className="size-5" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-black text-foreground">
+                    إجماليات الأصناف الواردة
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                    تجميع الكميات والمبالغ الإجمالية لكل صنف على حدة حسب اليوم أو المورد
+                  </DialogDescription>
+                </div>
+              </div>
+
+              {/* Action Buttons in header */}
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => printElement(document.getElementById("summary-print"))}
+                  className="h-9 rounded-xl text-xs font-bold gap-1.5"
+                >
+                  <Printer className="size-3.5" />
+                  <span>طباعة</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    exportToExcel(
+                      aggregatedSummary.map((item) => ({
+                        "الصنف": item.productName,
+                        "إجمالي العدد": item.totalQty,
+                        "متوسط التكلفة للوحدة": Math.round(item.avgPrice * 100) / 100,
+                        "إجمالي المبلغ (ج.م)": item.totalCost,
+                        "عدد مرات الشراء": item.entriesCount,
+                        "الموردون": Array.from(item.suppliers).join("، ") || "—",
+                      })),
+                      `اجماليات-الاصناف-${todayISO()}`
+                    );
+                  }}
+                  className="h-9 rounded-xl text-xs font-bold gap-1.5"
+                >
+                  <FileSpreadsheet className="size-3.5" />
+                  <span>Excel</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Filter Selector Options */}
+            <div className="mt-4 pt-4 border-t border-border/70 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl text-xs font-bold">
+                <button
+                  type="button"
+                  onClick={() => setSummaryFilterType("all")}
+                  className={`px-3 py-1.5 rounded-lg transition-all ${
+                    summaryFilterType === "all"
+                      ? "bg-card text-foreground shadow-xs border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  كافة السجلات
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSummaryFilterType("date")}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                    summaryFilterType === "date"
+                      ? "bg-card text-foreground shadow-xs border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Calendar className="size-3.5" />
+                  <span>حسب اليوم</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSummaryFilterType("supplier")}
+                  className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                    summaryFilterType === "supplier"
+                      ? "bg-card text-foreground shadow-xs border border-border"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <User className="size-3.5" />
+                  <span>حسب التاجر (المورد)</span>
+                </button>
+              </div>
+
+              {/* Dynamic Filter Input */}
+              {summaryFilterType === "date" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-muted-foreground">اختر اليوم:</span>
+                  <input
+                    type="date"
+                    value={summaryDate}
+                    onChange={(e) => setSummaryDate(e.target.value)}
+                    className="h-9 rounded-xl border border-input bg-background px-3 text-xs font-bold"
+                  />
+                  {uniqueDates.length > 0 && (
+                    <select
+                      value={summaryDate}
+                      onChange={(e) => setSummaryDate(e.target.value)}
+                      className="h-9 rounded-xl border border-input bg-background px-2.5 text-xs"
+                    >
+                      <option value="">— أيام بها وارد —</option>
+                      {uniqueDates.map((d) => (
+                        <option key={d} value={d}>
+                          {DATE_AR(d)}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+
+              {summaryFilterType === "supplier" && (
+                <div className="flex items-center gap-2 flex-1 min-w-56">
+                  <span className="text-xs font-bold text-muted-foreground whitespace-nowrap">
+                    اختر التاجر:
+                  </span>
+                  <select
+                    value={summarySupplier}
+                    onChange={(e) => setSummarySupplier(e.target.value)}
+                    className="h-9 flex-1 rounded-xl border border-input bg-background px-3 text-xs font-bold"
+                  >
+                    <option value="">— اختر جهة الشراء / التاجر —</option>
+                    {uniqueSuppliers.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Search input inside modal */}
+              <div className="relative ms-auto flex-1 max-w-xs">
+                <Search className="size-3.5 text-muted-foreground absolute right-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="ابحث عن صنف..."
+                  value={summarySearch}
+                  onChange={(e) => setSummarySearch(e.target.value)}
+                  className="w-full pr-8 h-9 rounded-xl border border-input bg-background text-xs font-semibold"
+                />
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Quick Stats Ribbon */}
+          <div className="px-5 py-3 border-b border-border bg-muted/30 grid grid-cols-3 gap-3 shrink-0">
+            <div className="p-2.5 rounded-xl bg-card border border-border shadow-xs text-center">
+              <div className="text-[11px] text-muted-foreground font-semibold">عدد الأصناف المجمعة</div>
+              <div className="text-base font-extrabold text-foreground mt-0.5">
+                {NUM(aggregatedSummary.length)} صنف
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-card border border-border shadow-xs text-center">
+              <div className="text-[11px] text-muted-foreground font-semibold">إجمالي عدد القطع</div>
+              <div className="text-base font-extrabold text-primary mt-0.5">
+                {NUM(summaryGrandQty)} قطعة
+              </div>
+            </div>
+            <div className="p-2.5 rounded-xl bg-card border border-border shadow-xs text-center">
+              <div className="text-[11px] text-muted-foreground font-semibold">إجمالي المبلغ الكلي</div>
+              <div className="text-base font-extrabold text-emerald-700 dark:text-emerald-300 mt-0.5">
+                {EGP(summaryGrandCost)}
+              </div>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <div id="summary-print" className="flex-1 overflow-y-auto p-5">
+            <div className="border border-border rounded-2xl overflow-hidden shadow-xs">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-muted-foreground sticky top-0 font-bold border-b border-border">
+                  <tr>
+                    <th className="py-2.5 px-4 text-start">الصنف</th>
+                    <th className="py-2.5 px-3 text-center">إجمالي العدد (الكمية)</th>
+                    <th className="py-2.5 px-3 text-center">متوسط سعر التكلفة</th>
+                    <th className="py-2.5 px-4 text-start">إجمالي المبلغ الكلي</th>
+                    <th className="py-2.5 px-3 text-center">عدد العمليات</th>
+                    <th className="py-2.5 px-4 text-start">
+                      {summaryFilterType === "supplier" ? "التواريخ" : "المورد / جهة الشراء"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {aggregatedSummary.map((item, idx) => (
+                    <tr key={item.productId} className="hover:bg-muted/40 transition-colors">
+                      <td className="py-3 px-4 font-bold text-foreground">
+                        <div className="flex items-center gap-2">
+                          <span className="size-5 rounded-full bg-primary/10 text-primary text-[10px] font-black grid place-items-center shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span>{item.productName}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-black text-xs">
+                          {NUM(item.totalQty)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center text-muted-foreground font-semibold">
+                        {EGP(item.avgPrice)}
+                      </td>
+                      <td className="py-3 px-4 font-black text-emerald-700 dark:text-emerald-300 text-sm">
+                        {EGP(item.totalCost)}
+                      </td>
+                      <td className="py-3 px-3 text-center text-xs text-muted-foreground">
+                        {item.entriesCount} مرة
+                      </td>
+                      <td className="py-3 px-4 text-xs text-muted-foreground max-w-xs truncate">
+                        {summaryFilterType === "supplier"
+                          ? Array.from(item.dates).map((d) => DATE_AR(d)).join(" ، ") || "—"
+                          : Array.from(item.suppliers).join(" ، ") || "—"}
+                      </td>
+                    </tr>
+                  ))}
+
+                  {aggregatedSummary.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                        لا توجد أصناف تطابق الفلتر المحدد.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                {aggregatedSummary.length > 0 && (
+                  <tfoot className="bg-muted/70 font-black border-t-2 border-border text-foreground">
+                    <tr>
+                      <td className="py-3.5 px-4">الإجمالي الكلي</td>
+                      <td className="py-3.5 px-3 text-center text-primary text-base">
+                        {NUM(summaryGrandQty)}
+                      </td>
+                      <td className="py-3.5 px-3 text-center text-muted-foreground text-xs">—</td>
+                      <td className="py-3.5 px-4 text-emerald-700 dark:text-emerald-300 text-base">
+                        {EGP(summaryGrandCost)}
+                      </td>
+                      <td colSpan={2} className="py-3.5 px-4 text-xs text-muted-foreground">
+                        إجمالي الأصناف المجمعة أعلاه
+                      </td>
+                    </tr>
+                  </tfoot>
+                )}
+              </table>
+            </div>
+          </div>
+
+          <div className="p-4 border-t border-border bg-muted/20 flex items-center justify-between gap-3 shrink-0">
+            <span className="text-xs text-muted-foreground">
+              * تم تجميع كافة الأصناف المتكررة تلقائياً لحساب الإجمالي الكلي للكميات والمبالغ بدقة.
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setIsSummaryOpen(false)}
+              className="h-9 rounded-xl text-xs font-bold"
+            >
+              إغلاق
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
