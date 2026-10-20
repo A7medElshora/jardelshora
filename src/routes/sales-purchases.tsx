@@ -1133,7 +1133,16 @@ function SalesPurchasesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => printElement(document.getElementById("single-invoice-print"))}
+                        onClick={() => {
+                          const el = document.getElementById("invoice-print-area");
+                          if (!el) return;
+                          const w = window.open("", "_blank");
+                          if (!w) return;
+                          w.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>فاتورة</title><style>body{font-family:Arial,sans-serif;margin:24px;direction:rtl}table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid #ccc;padding:6px 10px}th{background:#f5f5f5;font-weight:bold;text-align:center}td{text-align:center}.name-col{text-align:right}.footer-row{background:#f9f9f9;font-weight:bold}.total-label{text-align:left;padding-left:12px}.highlight{color:#c00;font-weight:bold}.unpaid{color:#e07000}</style></head><body>${el.innerHTML}</body></html>`);
+                          w.document.close();
+                          w.focus();
+                          setTimeout(() => { w.print(); w.close(); }, 400);
+                        }}
                         className="h-9 rounded-xl text-xs font-bold gap-1.5"
                       >
                         <Printer className="size-3.5" />
@@ -1429,52 +1438,59 @@ function SalesPurchasesPage() {
                     })}
                   </div>
 
-                  {/* Printable Summary Table for single invoice */}
-                  <div className="hidden print:block border border-border rounded-xl mt-4">
-                    <table className="w-full text-xs">
-                      <thead className="bg-muted text-muted-foreground font-bold border-b border-border">
+                  {/* Hidden print-only invoice area — opened in new window */}
+                  <div id="invoice-print-area" style={{ display: "none" }}>
+                    <div style={{ textAlign: "center", marginBottom: 12 }}>
+                      <strong style={{ fontSize: 16 }}>فاتورة وارد — {viewingInvoice.supplier_name}</strong><br />
+                      <span style={{ fontSize: 12, color: "#555" }}>{DATE_AR(viewingInvoice.invoice_date)}</span>
+                      {viewingInvoice.notes && (
+                        <div style={{ fontSize: 11, color: "#777", marginTop: 4 }}>ملاحظات: {viewingInvoice.notes}</div>
+                      )}
+                    </div>
+
+                    <table>
+                      <thead>
                         <tr>
-                          <th className="py-2 px-2 text-start">الصنف</th>
-                          <th className="py-2 px-2 text-center">الوحدة</th>
-                          <th className="py-2 px-2 text-center">إجمالي القطع</th>
-                          <th className="py-2 px-2 text-center">تكلفة جملة</th>
-                          <th className="py-2 px-2 text-center">سعر قطاعي</th>
-                          <th className="py-2 px-2 text-center text-red-600">الربح المتوقع بالقطاعي</th>
-                          <th className="py-2 px-2 text-center">المرصوص بالرف</th>
-                          <th className="py-2 px-2 text-center">المباع</th>
-                          <th className="py-2 px-2 text-center">متبقي بالمخزن</th>
-                          <th className="py-2 px-2 text-center">الربح المحقق</th>
+                          <th style={{ textAlign: "right" }}>الصنف</th>
+                          <th>الوحدة</th>
+                          <th>الكمية (قطعة)</th>
+                          <th>سعر القطعة</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border">
+                      <tbody>
                         {viewingInvoice.items.map((it, idx) => {
                           const totalPieces = it.packageCount * it.itemsPerPackage;
-                          const lineCost = it.packageCount * it.packageWholesalePrice;
-                          const pieceWholesale = it.itemsPerPackage > 0 ? it.packageWholesalePrice / it.itemsPerPackage : 0;
                           const pieceRetail = it.pieceRetailPrice || 0;
-                          const pieceProfit = Math.max(0, pieceRetail - pieceWholesale);
-                          const itemExpectedProfit = (totalPieces * pieceRetail) - lineCost;
-                          const displayed = it.displayedPieces || 0;
-                          const sold = it.soldPieces || 0;
-                          const inCarton = totalPieces - displayed;
-                          const itemRealizedProfit = sold * pieceProfit;
-
                           return (
                             <tr key={idx}>
-                              <td className="py-2 px-2 font-bold">{it.name}</td>
-                              <td className="py-2 px-2 text-center">{UNIT_LABELS[it.unitType] || it.unitType}</td>
-                              <td className="py-2 px-2 text-center font-bold">{totalPieces}</td>
-                              <td className="py-2 px-2 text-center">{EGP(pieceWholesale)}</td>
-                              <td className="py-2 px-2 text-center">{EGP(pieceRetail)}</td>
-                              <td className="py-2 px-2 text-center font-bold text-red-600">{EGP(itemExpectedProfit)}</td>
-                              <td className="py-2 px-2 text-center">{displayed}</td>
-                              <td className="py-2 px-2 text-center font-bold">{sold}</td>
-                              <td className="py-2 px-2 text-center">{inCarton}</td>
-                              <td className="py-2 px-2 text-center font-bold text-emerald-600">{EGP(itemRealizedProfit)}</td>
+                              <td style={{ textAlign: "right" }}>{it.name}</td>
+                              <td>{UNIT_LABELS[it.unitType] || it.unitType}</td>
+                              <td>{totalPieces}</td>
+                              <td>{EGP(pieceRetail)}</td>
                             </tr>
                           );
                         })}
                       </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan={4} style={{ borderTop: "2px solid #999", paddingTop: 8 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span>💰 إجمالي الفاتورة:</span>
+                              <strong style={{ color: "#000" }}>{EGP(viewingInvoice.total_amount)}</strong>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                              <span>📈 الربح المتوقع (بعد بيع الكل):</span>
+                              <strong style={{ color: "#c00" }}>{EGP(viewingInvoiceStats?.totalExpectedProfit || 0)}</strong>
+                            </div>
+                            {viewingInvoice.total_amount - viewingInvoice.paid_amount > 0 && (
+                              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span>⚠️ المتبقي غير المدفوع للتاجر:</span>
+                                <strong style={{ color: "#e07000" }}>{EGP(viewingInvoice.total_amount - viewingInvoice.paid_amount)}</strong>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      </tfoot>
                     </table>
                   </div>
                 </div>
