@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   CalendarDays,
   PackagePlus,
+  Receipt,
   ArrowLeft,
   ScanBarcode,
   Layers,
@@ -331,6 +332,14 @@ function Dashboard() {
       icon: PackagePlus,
       variant: "warning" as const,
       badge: `${NUM(totalIn)} قطعة`,
+    },
+    {
+      to: "/sales-purchases",
+      label: "وارد المبيعات (الجملة)",
+      desc: "تسجيل فواتير الكراتين والبلتات وسعر الشراء والقطاعي وحساب المسدد والآجل",
+      icon: Receipt,
+      variant: "info" as const,
+      badge: "كراتين وبلتات",
     },
     {
       to: "/products",

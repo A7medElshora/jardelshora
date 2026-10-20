@@ -19,6 +19,8 @@ import { Route as ProfitsRouteImport } from './routes/profits'
 import { Route as PurchasesRouteImport } from './routes/purchases'
 import { Route as QuotationRouteImport } from './routes/quotation'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SalesPurchasesRouteImport } from './routes/sales-purchases'
+import { Route as SalesTrackingRouteImport } from './routes/sales-tracking'
 import { Route as TaqseematRouteImport } from './routes/taqseemat'
 import { Route as WeeklyRouteImport } from './routes/weekly'
 import { Route as ApiPublicCashierProductsRouteImport } from './routes/api/public/cashier/products'
@@ -76,6 +78,16 @@ const ReportsRoute = ReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SalesPurchasesRoute = SalesPurchasesRouteImport.update({
+  id: '/sales-purchases',
+  path: '/sales-purchases',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesTrackingRoute = SalesTrackingRouteImport.update({
+  id: '/sales-tracking',
+  path: '/sales-tracking',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TaqseematRoute = TaqseematRouteImport.update({
   id: '/taqseemat',
   path: '/taqseemat',
@@ -120,6 +132,8 @@ export interface FileRoutesByFullPath {
   '/purchases': typeof PurchasesRoute
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
+  '/sales-purchases': typeof SalesPurchasesRoute
+  '/sales-tracking': typeof SalesTrackingRoute
   '/taqseemat': typeof TaqseematRoute
   '/weekly': typeof WeeklyRoute
   '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
@@ -138,6 +152,8 @@ export interface FileRoutesByTo {
   '/purchases': typeof PurchasesRoute
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
+  '/sales-purchases': typeof SalesPurchasesRoute
+  '/sales-tracking': typeof SalesTrackingRoute
   '/taqseemat': typeof TaqseematRoute
   '/weekly': typeof WeeklyRoute
   '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
@@ -157,6 +173,8 @@ export interface FileRoutesById {
   '/purchases': typeof PurchasesRoute
   '/quotation': typeof QuotationRoute
   '/reports': typeof ReportsRoute
+  '/sales-purchases': typeof SalesPurchasesRoute
+  '/sales-tracking': typeof SalesTrackingRoute
   '/taqseemat': typeof TaqseematRoute
   '/weekly': typeof WeeklyRoute
   '/api/public/cashier/products': typeof ApiPublicCashierProductsRouteWithChildren
@@ -177,6 +195,8 @@ export interface FileRouteTypes {
     | '/purchases'
     | '/quotation'
     | '/reports'
+    | '/sales-purchases'
+    | '/sales-tracking'
     | '/taqseemat'
     | '/weekly'
     | '/api/public/cashier/products'
@@ -195,6 +215,8 @@ export interface FileRouteTypes {
     | '/purchases'
     | '/quotation'
     | '/reports'
+    | '/sales-purchases'
+    | '/sales-tracking'
     | '/taqseemat'
     | '/weekly'
     | '/api/public/cashier/products'
@@ -213,6 +235,8 @@ export interface FileRouteTypes {
     | '/purchases'
     | '/quotation'
     | '/reports'
+    | '/sales-purchases'
+    | '/sales-tracking'
     | '/taqseemat'
     | '/weekly'
     | '/api/public/cashier/products'
@@ -232,6 +256,8 @@ export interface RootRouteChildren {
   PurchasesRoute: typeof PurchasesRoute
   QuotationRoute: typeof QuotationRoute
   ReportsRoute: typeof ReportsRoute
+  SalesPurchasesRoute: typeof SalesPurchasesRoute
+  SalesTrackingRoute: typeof SalesTrackingRoute
   TaqseematRoute: typeof TaqseematRoute
   WeeklyRoute: typeof WeeklyRoute
   ApiPublicCashierProductsRoute: typeof ApiPublicCashierProductsRouteWithChildren
@@ -311,6 +337,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sales-purchases': {
+      id: '/sales-purchases'
+      path: '/sales-purchases'
+      fullPath: '/sales-purchases'
+      preLoaderRoute: typeof SalesPurchasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sales-tracking': {
+      id: '/sales-tracking'
+      path: '/sales-tracking'
+      fullPath: '/sales-tracking'
+      preLoaderRoute: typeof SalesTrackingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/taqseemat': {
       id: '/taqseemat'
       path: '/taqseemat'
@@ -381,6 +421,8 @@ const rootRouteChildren: RootRouteChildren = {
   PurchasesRoute: PurchasesRoute,
   QuotationRoute: QuotationRoute,
   ReportsRoute: ReportsRoute,
+  SalesPurchasesRoute: SalesPurchasesRoute,
+  SalesTrackingRoute: SalesTrackingRoute,
   TaqseematRoute: TaqseematRoute,
   WeeklyRoute: WeeklyRoute,
   ApiPublicCashierProductsRoute: ApiPublicCashierProductsRouteWithChildren,
