@@ -86,6 +86,154 @@ export type Database = {
         }
         Relationships: []
       }
+      cig_items: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          quantity: number
+          updated_at: string
+          wholesale_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          quantity?: number
+          updated_at?: string
+          wholesale_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          quantity?: number
+          updated_at?: string
+          wholesale_price?: number
+        }
+        Relationships: []
+      }
+      cig_purchases: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          item_name: string
+          purchase_date: string
+          quantity: number
+          wholesale_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          item_name: string
+          purchase_date?: string
+          quantity: number
+          wholesale_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_name?: string
+          purchase_date?: string
+          quantity?: number
+          wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cig_purchases_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cig_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cig_settings: {
+        Row: {
+          base_capital: number
+          created_at: string
+          id: number
+          start_date: string
+        }
+        Insert: {
+          base_capital?: number
+          created_at?: string
+          id?: number
+          start_date?: string
+        }
+        Update: {
+          base_capital?: number
+          created_at?: string
+          id?: number
+          start_date?: string
+        }
+        Relationships: []
+      }
+      cig_settlements: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          settlement_date: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          settlement_date?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          settlement_date?: string
+        }
+        Relationships: []
+      }
+      cig_transfers: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          item_name: string
+          quantity: number
+          transfer_date: string
+          wholesale_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          item_name: string
+          quantity: number
+          transfer_date?: string
+          wholesale_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_name?: string
+          quantity?: number
+          transfer_date?: string
+          wholesale_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cig_transfers_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "cig_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cigarette_sales: {
         Row: {
           created_at: string
