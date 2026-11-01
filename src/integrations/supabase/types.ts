@@ -584,7 +584,56 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      cig_add_item: {
+        Args: { p_name: string; p_quantity: number; p_wholesale_price: number }
+        Returns: string
+      }
+      cig_add_settlement: {
+        Args: { p_amount: number; p_note: string; p_settlement_date: string }
+        Returns: undefined
+      }
+      cig_delete_item: { Args: { p_item_id: string }; Returns: undefined }
+      cig_delete_purchase: { Args: { p_id: string }; Returns: undefined }
+      cig_delete_settlement: { Args: { p_id: string }; Returns: undefined }
+      cig_delete_transfer: { Args: { p_id: string }; Returns: undefined }
+      cig_item_remaining: { Args: { p_item_id: string }; Returns: number }
+      cig_mardooda_balance: { Args: never; Returns: number }
+      cig_purchase: {
+        Args: {
+          p_item_id: string
+          p_name: string
+          p_purchase_date: string
+          p_quantity: number
+          p_wholesale_price: number
+        }
+        Returns: undefined
+      }
+      cig_transfer: {
+        Args: { p_item_id: string; p_quantity: number; p_transfer_date: string }
+        Returns: undefined
+      }
+      cig_update_item: {
+        Args: {
+          p_item_id: string
+          p_name: string
+          p_quantity: number
+          p_wholesale_price: number
+        }
+        Returns: undefined
+      }
+      cig_update_purchase: {
+        Args: {
+          p_id: string
+          p_purchase_date: string
+          p_quantity: number
+          p_wholesale_price: number
+        }
+        Returns: undefined
+      }
+      cig_update_transfer: {
+        Args: { p_id: string; p_quantity: number; p_transfer_date: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
