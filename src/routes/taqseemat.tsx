@@ -116,16 +116,19 @@ function TaqseematPage() {
 
   const filtering = Boolean(from || to);
 
+  const allDates = useMemo(
+    () => [...new Set<string>([...cigByDate.keys(), ...manualByDate.keys(), ...wByDate.keys(), ...profitByDate.keys()])],
+    [cigByDate, manualByDate, wByDate, profitByDate],
+  );
   const dates = useMemo(() => {
-    const set = new Set<string>([...cigByDate.keys(), ...manualByDate.keys(), ...wByDate.keys(), ...profitByDate.keys()]);
-    let list = [...set];
+    let list = allDates;
     if (filtering) {
       list = list.filter((d) => (!from || d >= from) && (!to || d <= to));
     } else {
       list = list.filter((d) => monthKey(d) === month);
     }
     return list.sort((a, b) => (a < b ? 1 : -1));
-  }, [cigByDate, manualByDate, wByDate, profitByDate, filtering, from, to, month]);
+  }, [allDates, filtering, from, to, month]);
 
   // Totals (للفترة المعروضة)
   const cigRetailTotal = dates.reduce((s, d) => s + (cigByDate.get(d) ?? 0), 0);
@@ -135,7 +138,30 @@ function TaqseematPage() {
   const cigExpTotal = dates.reduce((s, d) => s + sumW(d, "cigarettes"), 0);
   const salesExpTotal = dates.reduce((s, d) => s + sumW(d, "sales"), 0);
   const daysTotal = cigRetailTotal + salesTotal + profitTotal;
-  const remaining = daysTotal - profitTotal - cigExpTotal - salesExpTotal;
+  const previousMonth = shiftMonth(month, -1);
+  const [previousYear, previousMonthNumber] = previousMonth.split("-").map(Number);
+  const previousMonthLastDate = new Date(Date.UTC(previousYear, previousMonthNumber, 0))
+    .toISOString()
+    .slice(0, 10);
+  const previousMonthRemaining = filtering
+    ? 0
+    : allDates
+        .filter((d) => monthKey(d) === previousMonth)
+        .reduce(
+          (total, d) =>
+            total +
+            (cigByDate.get(d) ?? 0) +
+            (manualByDate.get(d) ?? 0) -
+            sumW(d, "cigarettes") -
+            sumW(d, "sales"),
+          0,
+        );
+  const carryover = Math.max(0, previousMonthRemaining);
+  const remaining = daysTotal - profitTotal - cigExpTotal - salesExpTotal + carryover;
+  const carryoverNote =
+    carryover > 0
+      ? `بدأ شهر ${monthLabel(month)} بمبلغ متبقٍ من ${DATE_AR(previousMonthLastDate)}: ${EGP(carryover)}`
+      : "";
 
   const saveCig = async (date: string, amount: number) => {
     const { error } = await supabase.from("cigarette_sales").upsert({ sale_date: date, retail_total: amount }, { onConflict: "sale_date" });
@@ -419,7 +445,7 @@ function TaqseematPage() {
         <body>
           <div class="header">
             <h1>الشوره ماركت — سجل التقسيمات اليومية</h1>
-            <p>${periodText} — تاريخ الطباعة: ${todayDate}</p>
+            <p>${periodText} — تاريخ الطباعة: ${todayDate}${carryoverNote ? ` — ${carryoverNote}` : ""}</p>
           </div>
 
           <div class="stats-bar">
@@ -500,8 +526,13 @@ function TaqseematPage() {
     <AppShell title="تقسيمات">
       {/* Grand total */}
       <div className="rounded-2xl bg-gradient-primary text-white p-6 shadow-elevated mb-6 text-center">
-        <div className="text-sm opacity-90">المتبقي = إجمالي الأيام − الأرباح − منصرفات السجاير والمبيعات{filtering ? " — للفترة المحددة" : ` — ${monthLabel(month)}`}</div>
+        <div className="text-sm opacity-90">
+          المتبقي = إجمالي الأيام − الأرباح − منصرفات السجاير والمبيعات
+          {carryover > 0 ? " + المتبقي من الشهر السابق" : ""}
+          {filtering ? " — للفترة المحددة" : ` — ${monthLabel(month)}`}
+        </div>
         <div className="mt-1 text-4xl font-extrabold tracking-tight">{EGP(remaining)}</div>
+        {carryoverNote && <div className="mt-2 text-sm opacity-90">{carryoverNote}</div>}
       </div>
 
       {/* 3 boxes */}
