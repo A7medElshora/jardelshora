@@ -341,6 +341,45 @@ export type Database = {
           },
         ]
       }
+      sales_purchase_invoices: {
+        Row: {
+          created_at: string
+          id: string
+          invoice_date: string
+          invoice_number: string | null
+          items: Json
+          notes: string | null
+          paid_amount: number
+          supplier_name: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          invoice_date: string
+          invoice_number?: string | null
+          items?: Json
+          notes?: string | null
+          paid_amount?: number
+          supplier_name: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string | null
+          items?: Json
+          notes?: string | null
+          paid_amount?: number
+          supplier_name?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       taqseemat_profits: {
         Row: {
           amount: number
