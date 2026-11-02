@@ -597,11 +597,10 @@ export type Database = {
       cig_delete_settlement: { Args: { p_id: string }; Returns: undefined }
       cig_delete_transfer: { Args: { p_id: string }; Returns: undefined }
       cig_item_remaining: { Args: { p_item_id: string }; Returns: number }
-      cig_item_unit_cost: { Args: { p_item_id: string }; Returns: number }
       cig_mardooda_balance: { Args: never; Returns: number }
       cig_purchase: {
         Args: {
-          p_item_id: string | null
+          p_item_id: string
           p_name: string
           p_purchase_date: string
           p_quantity: number
