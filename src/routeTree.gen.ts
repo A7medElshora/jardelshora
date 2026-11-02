@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CashierRouteImport } from './routes/cashier'
+import { Route as CigaretteWarehouseRouteImport } from './routes/cigarette-warehouse'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as MonthlyRouteImport } from './routes/monthly'
 import { Route as PriceHistoryRouteImport } from './routes/price-history'
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
 const CashierRoute = CashierRouteImport.update({
   id: '/cashier',
   path: '/cashier',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CigaretteWarehouseRoute = CigaretteWarehouseRouteImport.update({
+  id: '/cigarette-warehouse',
+  path: '/cigarette-warehouse',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DailyRoute = DailyRouteImport.update({
@@ -124,6 +130,7 @@ const ApiPublicCashierProductsIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cashier': typeof CashierRoute
+  '/cigarette-warehouse': typeof CigaretteWarehouseRoute
   '/daily': typeof DailyRoute
   '/monthly': typeof MonthlyRoute
   '/price-history': typeof PriceHistoryRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cashier': typeof CashierRoute
+  '/cigarette-warehouse': typeof CigaretteWarehouseRoute
   '/daily': typeof DailyRoute
   '/monthly': typeof MonthlyRoute
   '/price-history': typeof PriceHistoryRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cashier': typeof CashierRoute
+  '/cigarette-warehouse': typeof CigaretteWarehouseRoute
   '/daily': typeof DailyRoute
   '/monthly': typeof MonthlyRoute
   '/price-history': typeof PriceHistoryRoute
@@ -187,6 +196,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/cashier'
+    | '/cigarette-warehouse'
     | '/daily'
     | '/monthly'
     | '/price-history'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/cashier'
+    | '/cigarette-warehouse'
     | '/daily'
     | '/monthly'
     | '/price-history'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/cashier'
+    | '/cigarette-warehouse'
     | '/daily'
     | '/monthly'
     | '/price-history'
@@ -248,6 +260,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CashierRoute: typeof CashierRoute
+  CigaretteWarehouseRoute: typeof CigaretteWarehouseRoute
   DailyRoute: typeof DailyRoute
   MonthlyRoute: typeof MonthlyRoute
   PriceHistoryRoute: typeof PriceHistoryRoute
@@ -279,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/cashier'
       fullPath: '/cashier'
       preLoaderRoute: typeof CashierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cigarette-warehouse': {
+      id: '/cigarette-warehouse'
+      path: '/cigarette-warehouse'
+      fullPath: '/cigarette-warehouse'
+      preLoaderRoute: typeof CigaretteWarehouseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/daily': {
@@ -413,6 +433,7 @@ const ApiPublicCashierProductsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CashierRoute: CashierRoute,
+  CigaretteWarehouseRoute: CigaretteWarehouseRoute,
   DailyRoute: DailyRoute,
   MonthlyRoute: MonthlyRoute,
   PriceHistoryRoute: PriceHistoryRoute,
