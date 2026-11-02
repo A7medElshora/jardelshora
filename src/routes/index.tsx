@@ -208,6 +208,28 @@ function Dashboard() {
   const taqseematDaysTotal = taqseematCigTotal + taqseematSalesTotal + taqseematProfitTotal;
   const taqseematRemaining =
     taqseematDaysTotal - taqseematProfitTotal - taqseematCigExpTotal - taqseematSalesExpTotal;
+  const previousMonthLastDate = new Date(today.getFullYear(), today.getMonth(), 0);
+  const previousMonthPrefix = `${previousMonthLastDate.getFullYear()}-${String(previousMonthLastDate.getMonth() + 1).padStart(2, "0")}`;
+  const previousMonthDates = new Set([
+    ...cigByDate.keys(),
+    ...manualByDate.keys(),
+    ...wByDate.keys(),
+    ...profitByDate.keys(),
+  ]);
+  const previousMonthRemaining = [...previousMonthDates]
+    .filter((d) => d.startsWith(previousMonthPrefix))
+    .reduce(
+      (total, d) =>
+        total +
+        (cigByDate.get(d) ?? 0) +
+        (manualByDate.get(d) ?? 0) -
+        sumW(d, "cigarettes") -
+        sumW(d, "sales"),
+      0,
+    );
+  const taqseematCarryover = Math.max(0, previousMonthRemaining);
+  const taqseematRemainingWithCarryover = taqseematRemaining + taqseematCarryover;
+  const previousMonthLastDateLabel = `${String(previousMonthLastDate.getDate()).padStart(2, "0")}/${String(previousMonthLastDate.getMonth() + 1).padStart(2, "0")}`;
 
   // Calculations: Today's specific performance
   const todaySales = sales.filter((s) => s.sale_date === currentIso);
@@ -454,12 +476,18 @@ function Dashboard() {
               </div>
               <h2 className="text-xl lg:text-2xl font-black tracking-tight">المتاح فى المحل</h2>
               <p className="text-xs lg:text-sm text-white/85">
-                المتبقي = إجمالي الأيام − الأرباح − منصرفات السجاير والمبيعات — لشهر {formattedMonthYear}
+                المتبقي = إجمالي الأيام − الأرباح − منصرفات السجاير والمبيعات
+                {taqseematCarryover > 0 ? " + المتبقي من الشهر السابق" : ""} — لشهر {formattedMonthYear}
               </p>
+              {taqseematCarryover > 0 && (
+                <p className="text-xs lg:text-sm text-white/85">
+                  بدأ الشهر بمبلغ متبقٍ من {previousMonthLastDateLabel}: {EGP(taqseematCarryover)}
+                </p>
+              )}
             </div>
             <div className="text-start md:text-end shrink-0">
               <div className="text-3xl lg:text-5xl font-black tracking-tight drop-shadow-sm">
-                {EGP(taqseematRemaining)}
+                {EGP(taqseematRemainingWithCarryover)}
               </div>
               <Link
                 to="/taqseemat"
