@@ -15,6 +15,20 @@
       "when": 1793558663784,
       "tag": "0001_create_cig_warehouse_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793628440080,
+      "tag": "0002_cigarette_returned_balance",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793628449013,
+      "tag": "0003_cig_update_purchase_use_balance_fn",
+      "breakpoints": true
     }
   ]
 }

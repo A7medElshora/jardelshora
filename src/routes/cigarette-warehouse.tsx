@@ -346,7 +346,7 @@ function CigaretteWarehousePage() {
             p_purchase_date: input.date,
           })
         : await supabase.rpc("cig_purchase", {
-            p_item_id: input.itemId || null,
+            p_item_id: (input.itemId || null) as string,
             p_name: input.name,
             p_quantity: input.quantity,
             p_wholesale_price: input.price,
