@@ -533,6 +533,8 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          note: string | null
+          outgoing_amount: number
           profit_date: string
           updated_at: string
         }
@@ -540,6 +542,8 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          note?: string | null
+          outgoing_amount?: number
           profit_date: string
           updated_at?: string
         }
@@ -547,6 +551,8 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          note?: string | null
+          outgoing_amount?: number
           profit_date?: string
           updated_at?: string
         }

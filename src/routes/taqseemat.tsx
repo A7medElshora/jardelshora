@@ -23,7 +23,7 @@ export const Route = createFileRoute("/taqseemat")({
 type ManualSale = { id: string; sale_date: string; amount: number };
 type Withdrawal = { id: string; entry_date: string; kind: "cigarettes" | "sales"; amount: number; note: string | null };
 type CigSale = { id: string; sale_date: string; retail_total: number };
-type ProfitW = { id: string; profit_date: string; taken_amount: number };
+type ProfitW = { id: string; profit_date: string; amount: number; note: string | null; outgoing_amount: number };
 
 async function listManualSales(): Promise<ManualSale[]> {
   const { data, error } = await supabase.from("manual_sales").select("*").order("sale_date", { ascending: false });
@@ -44,9 +44,9 @@ async function listWithdrawals(): Promise<Withdrawal[]> {
 }
 
 async function listTaqseematProfits(): Promise<ProfitW[]> {
-  const { data, error } = await (supabase as any).from("taqseemat_profits").select("id, profit_date, amount");
+  const { data, error } = await supabase.from("taqseemat_profits").select("id, profit_date, amount, note, outgoing_amount");
   if (error) throw error;
-  return ((data ?? []) as any[]).map((x) => ({ id: x.id, profit_date: x.profit_date, taken_amount: x.amount }));
+  return (data ?? []) as ProfitW[];
 }
 
 const MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
@@ -66,6 +66,9 @@ function shiftMonth(key: string, delta: number) {
   const d = new Date(Date.UTC(y, m - 1 + delta, 1));
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
+}
 
 function TaqseematPage() {
   const qc = useQueryClient();
@@ -82,6 +85,7 @@ function TaqseematPage() {
   const [month, setMonth] = useState(currentMonthKey());
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, { kind: "" | "خرج" | "ملاحظة"; text: string; outgoingAmount: string }>>({});
 
   const manualQ = useQuery({ queryKey: ["manual-sales"], queryFn: listManualSales });
   const wQ = useQuery({ queryKey: ["taqseemat-withdrawals"], queryFn: listWithdrawals });
@@ -102,7 +106,9 @@ function TaqseematPage() {
 
   const cigByDate = useMemo(() => new Map(cigSales.map((x) => [x.sale_date, Number(x.retail_total)])), [cigSales]);
   const manualByDate = useMemo(() => new Map(manualSales.map((x) => [x.sale_date, Number(x.amount)])), [manualSales]);
-  const profitByDate = useMemo(() => new Map(profitWs.map((x) => [x.profit_date, Number(x.taken_amount)])), [profitWs]);
+  const profitByDate = useMemo(() => new Map(profitWs.map((x) => [x.profit_date, Number(x.amount)])), [profitWs]);
+  const profitNotesByDate = useMemo(() => new Map(profitWs.map((x) => [x.profit_date, x.note ?? ""])), [profitWs]);
+  const outgoingByDate = useMemo(() => new Map(profitWs.map((x) => [x.profit_date, Number(x.outgoing_amount)])), [profitWs]);
 
   const wByDate = useMemo(() => {
     const m = new Map<string, { cigarettes: Withdrawal[]; sales: Withdrawal[] }>();
@@ -137,6 +143,7 @@ function TaqseematPage() {
   const sumW = (d: string, k: "cigarettes" | "sales") => (wByDate.get(d)?.[k] ?? []).reduce((a, x) => a + Number(x.amount), 0);
   const cigExpTotal = dates.reduce((s, d) => s + sumW(d, "cigarettes"), 0);
   const salesExpTotal = dates.reduce((s, d) => s + sumW(d, "sales"), 0);
+  const outgoingTotal = dates.reduce((s, d) => s + (outgoingByDate.get(d) ?? 0), 0);
   const daysTotal = cigRetailTotal + salesTotal + profitTotal;
   const previousMonth = shiftMonth(month, -1);
   const [previousYear, previousMonthNumber] = previousMonth.split("-").map(Number);
@@ -152,12 +159,13 @@ function TaqseematPage() {
             total +
             (cigByDate.get(d) ?? 0) +
             (manualByDate.get(d) ?? 0) -
+            (outgoingByDate.get(d) ?? 0) -
             sumW(d, "cigarettes") -
             sumW(d, "sales"),
           0,
         );
   const carryover = Math.max(0, previousMonthRemaining);
-  const remaining = daysTotal - profitTotal - cigExpTotal - salesExpTotal + carryover;
+  const remaining = daysTotal - profitTotal - cigExpTotal - salesExpTotal + outgoingTotal + carryover;
   const carryoverNote =
     carryover > 0
       ? `بدأ شهر ${monthLabel(month)} بمبلغ متبقٍ من ${DATE_AR(previousMonthLastDate)}: ${EGP(carryover)}`
@@ -183,8 +191,30 @@ function TaqseematPage() {
   };
   const deleteProfit = async (date: string) => {
     if (!window.confirm("حذف أرباح هذا اليوم؟")) return;
-    const { error } = await (supabase as any).from("taqseemat_profits").delete().eq("profit_date", date);
+    const note = profitNotesByDate.get(date) ?? "";
+    const outgoingAmount = outgoingByDate.get(date) ?? 0;
+    const { error } = note || outgoingAmount > 0
+      ? await supabase.from("taqseemat_profits").update({ amount: 0 }).eq("profit_date", date)
+      : await supabase.from("taqseemat_profits").delete().eq("profit_date", date);
     if (error) return toast.error(error.message);
+    refresh();
+  };
+
+  const saveDayNote = async (date: string) => {
+    const draft = noteDrafts[date] ?? { kind: profitNotesByDate.get(date) === "خرج" ? "خرج" : profitNotesByDate.get(date) ? "ملاحظة" : "", text: profitNotesByDate.get(date) ?? "", outgoingAmount: String(outgoingByDate.get(date) ?? "") };
+    const note = draft.kind === "خرج" ? "خرج" : draft.kind === "ملاحظة" ? draft.text.trim() : "";
+    const outgoingAmount = draft.kind === "خرج" ? Number(draft.outgoingAmount) : 0;
+    if (draft.kind === "ملاحظة" && !note) return toast.error("اكتب الملاحظة");
+    if (!Number.isFinite(outgoingAmount) || outgoingAmount < 0) return toast.error("اكتب مبلغاً صحيحاً");
+    const { error } = await supabase.from("taqseemat_profits").upsert({
+      profit_date: date,
+      amount: profitByDate.get(date) ?? 0,
+      note: note || null,
+      outgoing_amount: outgoingAmount,
+    }, { onConflict: "profit_date" });
+    if (error) return toast.error(error.message);
+    toast.success("تم حفظ ملاحظة اليوم");
+    setNoteDrafts((current) => { const next = { ...current }; delete next[date]; return next; });
     refresh();
   };
   const editValue = (label: string, cur: number, fn: (n: number) => void) => {
@@ -309,6 +339,8 @@ function TaqseematPage() {
         const cigRetail = cigByDate.get(d) ?? 0;
         const salesRev = manualByDate.get(d) ?? 0;
         const dayProfit = profitByDate.get(d) ?? 0;
+        const dayNote = profitNotesByDate.get(d) ?? "";
+        const outgoingAmount = outgoingByDate.get(d) ?? 0;
         const dayTotal = cigRetail + salesRev + dayProfit;
         const hasCig = cigByDate.has(d);
         const hasSales = manualByDate.has(d);
@@ -324,7 +356,7 @@ function TaqseematPage() {
           : w.sales.map((x) => `${NUM(Number(x.amount))}${x.note ? ` (${x.note})` : ""}`).join(" ، ");
 
         return `
-          <tr style="background:${idx % 2 === 0 ? "#ffffff" : "#f8fafc"};">
+          <tr style="background:${dayNote ? "#fef3c7" : idx % 2 === 0 ? "#ffffff" : "#f8fafc"};">
             <td style="padding:8px 10px; font-weight:700; border-bottom:1px solid #e2e8f0; white-space:nowrap;">${DATE_AR(d)}</td>
             <td style="padding:8px 10px; font-weight:800; border-bottom:1px solid #e2e8f0; color:#0f172a;">${EGP(dayTotal)}</td>
             <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0;">${hasCig ? EGP(cigRetail) : "—"}</td>
@@ -332,6 +364,7 @@ function TaqseematPage() {
             <td style="padding:8px 10px; font-weight:700; border-bottom:1px solid #e2e8f0; color:#16a34a;">${hasProfit ? EGP(dayProfit) : "—"}</td>
             <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0; font-size:11px; color:#d97706;">${cigWStr}</td>
             <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0; font-size:11px; color:#0284c7;">${salesWStr}</td>
+            <td style="padding:8px 10px; border-bottom:1px solid #e2e8f0;">${dayNote ? escapeHtml(dayNote) : "—"}${outgoingAmount > 0 ? `<br>مبلغ خرج: ${EGP(outgoingAmount)}` : ""}</td>
           </tr>
         `;
       })
@@ -489,6 +522,7 @@ function TaqseematPage() {
                 <th>الأرباح</th>
                 <th>منصرف سجاير</th>
                 <th>منصرف مبيعات</th>
+                <th>ملاحظة / مبلغ خرج</th>
               </tr>
             </thead>
             <tbody>
@@ -527,12 +561,13 @@ function TaqseematPage() {
       {/* Grand total */}
       <div className="rounded-2xl bg-gradient-primary text-white p-6 shadow-elevated mb-6 text-center">
         <div className="text-sm opacity-90">
-          المتبقي = إجمالي الأيام − الأرباح − منصرفات السجاير والمبيعات
+          المتبقي = إجمالي الأيام − الأرباح − المنصرفات + مبالغ خرج
           {carryover > 0 ? " + المتبقي من الشهر السابق" : ""}
           {filtering ? " — للفترة المحددة" : ` — ${monthLabel(month)}`}
         </div>
         <div className="mt-1 text-4xl font-extrabold tracking-tight">{EGP(remaining)}</div>
         {carryoverNote && <div className="mt-2 text-sm opacity-90">{carryoverNote}</div>}
+        {outgoingTotal > 0 && <div className="mt-2 text-sm opacity-90">مبالغ خرج المضافة: {EGP(outgoingTotal)}</div>}
       </div>
 
       {/* 3 boxes */}
@@ -660,12 +695,14 @@ function TaqseematPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {dates.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">لا توجد بيانات في هذه الفترة.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">لا توجد بيانات في هذه الفترة.</td></tr>
               )}
               {dates.map((d) => {
                 const cigRetail = cigByDate.get(d) ?? 0;
                 const salesRev = manualByDate.get(d) ?? 0;
                 const dayProfit = profitByDate.get(d) ?? 0;
+                const dayNote = profitNotesByDate.get(d) ?? "";
+                const outgoingAmount = outgoingByDate.get(d) ?? 0;
                 const dayTotal = cigRetail + salesRev + dayProfit;
                 const hasCig = cigByDate.has(d);
                 const hasSales = manualByDate.has(d);
@@ -678,7 +715,7 @@ function TaqseematPage() {
                 );
                 const w = wByDate.get(d) ?? { cigarettes: [], sales: [] };
                 return (
-                  <tr key={d} className="hover:bg-muted/30">
+                  <tr key={d} className={dayNote ? "bg-warning/10 hover:bg-warning/20" : "hover:bg-muted/30"}>
                     <td className="px-4 py-3 font-bold whitespace-nowrap">{DATE_AR(d)}<button onClick={() => changeDate(d)} className="text-primary hover:opacity-70 ms-2 align-middle" aria-label="تعديل التاريخ"><Pencil className="size-3.5" /></button></td>
                     <td className="px-4 py-3 font-bold">{EGP(dayTotal)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{hasCig ? EGP(cigRetail) : "—"}{cellBtns(() => editValue("قطاعي السجاير", cigRetail, (n) => saveCig(d, n)), hasCig ? () => deleteCig(d) : undefined)}</td>
@@ -714,6 +751,13 @@ function TaqseematPage() {
                         ))}
                       </div>
                     </td>
+                    <td className="px-4 py-3 min-w-40">
+                      <div className="flex items-center gap-2">
+                        {dayNote ? <span className="inline-flex rounded-full bg-warning/20 px-2 py-1 text-xs font-bold text-warning-foreground">{dayNote}</span> : <span className="text-muted-foreground">—</span>}
+                        <button onClick={() => editDayNote(d)} className="text-primary hover:opacity-70 no-print" aria-label="تعديل ملاحظة اليوم"><Pencil className="size-3.5" /></button>
+                      </div>
+                      {outgoingAmount > 0 && <div className="mt-1 text-xs font-semibold text-warning-foreground">مبلغ خرج: {EGP(outgoingAmount)}</div>}
+                    </td>
                   </tr>
                 );
               })}
@@ -721,7 +765,7 @@ function TaqseematPage() {
             {dates.length > 0 && (
               <tfoot>
                 <tr className="bg-muted/60 font-extrabold">
-                  <td className="px-4 py-3">الإجمالي</td>
+                  <td className="px-4 py-3" colSpan={2}>الإجمالي</td>
                   <td className="px-4 py-3">{EGP(daysTotal)}</td>
                   <td className="px-4 py-3">{EGP(cigRetailTotal)}</td>
                   <td className="px-4 py-3">{EGP(salesTotal)}</td>

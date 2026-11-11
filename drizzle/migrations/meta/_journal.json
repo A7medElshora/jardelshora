@@ -29,6 +29,13 @@
       "when": 1793628449013,
       "tag": "0003_cig_update_purchase_use_balance_fn",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794421995158,
+      "tag": "0004_taqseemat_daily_notes",
+      "breakpoints": true
     }
   ]
 }
