@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { StatCard } from "@/components/StatCard";
 import { supabase } from "@/integrations/supabase/client";
 import { EGP, NUM, DATE_AR, todayISO } from "@/lib/format";
+import { calculateTaqseematRemaining } from "@/lib/taqseemat-calculations";
 import { Cigarette, ShoppingBasket, Wallet, Layers, Plus, Trash2, Save, ChevronRight, ChevronLeft, X, Pencil, PiggyBank, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
@@ -144,6 +145,14 @@ function TaqseematPage() {
   const cigExpTotal = dates.reduce((s, d) => s + sumW(d, "cigarettes"), 0);
   const salesExpTotal = dates.reduce((s, d) => s + sumW(d, "sales"), 0);
   const outgoingTotal = dates.reduce((s, d) => s + (outgoingByDate.get(d) ?? 0), 0);
+  const getDayNoteDraft = (date: string) => noteDrafts[date] ?? {
+    kind: profitNotesByDate.get(date) === "خرج" ? "خرج" as const : profitNotesByDate.get(date) ? "ملاحظة" as const : "" as const,
+    text: profitNotesByDate.get(date) && profitNotesByDate.get(date) !== "خرج" ? profitNotesByDate.get(date) ?? "" : "",
+    outgoingAmount: String(outgoingByDate.get(date) ?? ""),
+  };
+  const updateDayNoteDraft = (date: string, patch: Partial<(typeof noteDrafts)[string]>) => {
+    setNoteDrafts((current) => ({ ...current, [date]: { ...getDayNoteDraft(date), ...patch } }));
+  };
   const daysTotal = cigRetailTotal + salesTotal + profitTotal;
   const previousMonth = shiftMonth(month, -1);
   const [previousYear, previousMonthNumber] = previousMonth.split("-").map(Number);
@@ -159,13 +168,20 @@ function TaqseematPage() {
             total +
             (cigByDate.get(d) ?? 0) +
             (manualByDate.get(d) ?? 0) -
-            (outgoingByDate.get(d) ?? 0) -
-            sumW(d, "cigarettes") -
-            sumW(d, "sales"),
+          sumW(d, "cigarettes") -
+          sumW(d, "sales") +
+          (outgoingByDate.get(d) ?? 0),
           0,
         );
   const carryover = Math.max(0, previousMonthRemaining);
-  const remaining = daysTotal - profitTotal - cigExpTotal - salesExpTotal + outgoingTotal + carryover;
+  const remaining = calculateTaqseematRemaining({
+    daysTotal,
+    profitTotal,
+    cigarettesExpenses: cigExpTotal,
+    salesExpenses: salesExpTotal,
+    outgoingTotal,
+    carryover,
+  });
   const carryoverNote =
     carryover > 0
       ? `بدأ شهر ${monthLabel(month)} بمبلغ متبقٍ من ${DATE_AR(previousMonthLastDate)}: ${EGP(carryover)}`
@@ -184,7 +200,12 @@ function TaqseematPage() {
     refresh();
   };
   const saveProfit = async (date: string, amount: number) => {
-    const { error } = await (supabase as any).from("taqseemat_profits").upsert({ profit_date: date, amount }, { onConflict: "profit_date" });
+    const { error } = await supabase.from("taqseemat_profits").upsert({
+      profit_date: date,
+      amount,
+      note: profitNotesByDate.get(date) || null,
+      outgoing_amount: outgoingByDate.get(date) ?? 0,
+    }, { onConflict: "profit_date" });
     if (error) return toast.error(error.message);
     toast.success("تم حفظ الأرباح");
     refresh();
@@ -201,17 +222,20 @@ function TaqseematPage() {
   };
 
   const saveDayNote = async (date: string) => {
-    const draft = noteDrafts[date] ?? { kind: profitNotesByDate.get(date) === "خرج" ? "خرج" : profitNotesByDate.get(date) ? "ملاحظة" : "", text: profitNotesByDate.get(date) ?? "", outgoingAmount: String(outgoingByDate.get(date) ?? "") };
+    const draft = getDayNoteDraft(date);
     const note = draft.kind === "خرج" ? "خرج" : draft.kind === "ملاحظة" ? draft.text.trim() : "";
     const outgoingAmount = draft.kind === "خرج" ? Number(draft.outgoingAmount) : 0;
     if (draft.kind === "ملاحظة" && !note) return toast.error("اكتب الملاحظة");
     if (!Number.isFinite(outgoingAmount) || outgoingAmount < 0) return toast.error("اكتب مبلغاً صحيحاً");
-    const { error } = await supabase.from("taqseemat_profits").upsert({
-      profit_date: date,
-      amount: profitByDate.get(date) ?? 0,
-      note: note || null,
-      outgoing_amount: outgoingAmount,
-    }, { onConflict: "profit_date" });
+    const dayProfit = profitByDate.get(date) ?? 0;
+    const { error } = !note && outgoingAmount === 0 && dayProfit === 0
+      ? await supabase.from("taqseemat_profits").delete().eq("profit_date", date)
+      : await supabase.from("taqseemat_profits").upsert({
+          profit_date: date,
+          amount: dayProfit,
+          note: note || null,
+          outgoing_amount: outgoingAmount,
+        }, { onConflict: "profit_date" });
     if (error) return toast.error(error.message);
     toast.success("تم حفظ ملاحظة اليوم");
     setNoteDrafts((current) => { const next = { ...current }; delete next[date]; return next; });
@@ -264,7 +288,12 @@ function TaqseematPage() {
     const ops: any[] = [];
     if (ndCig !== "") ops.push(sb.from("cigarette_sales").upsert({ sale_date: ndDate, retail_total: Number(ndCig) || 0 }, { onConflict: "sale_date" }));
     if (ndSales !== "") ops.push(sb.from("manual_sales").upsert({ sale_date: ndDate, amount: Number(ndSales) || 0 }, { onConflict: "sale_date" }));
-    if (ndProfit !== "") ops.push(sb.from("taqseemat_profits").upsert({ profit_date: ndDate, amount: Number(ndProfit) || 0 }, { onConflict: "profit_date" }));
+    if (ndProfit !== "") ops.push(sb.from("taqseemat_profits").upsert({
+      profit_date: ndDate,
+      amount: Number(ndProfit) || 0,
+      note: profitNotesByDate.get(ndDate) || null,
+      outgoing_amount: outgoingByDate.get(ndDate) ?? 0,
+    }, { onConflict: "profit_date" }));
     if (!ops.length) ops.push(sb.from("manual_sales").upsert({ sale_date: ndDate, amount: 0 }, { onConflict: "sale_date" }));
     const r = await Promise.all(ops);
     const err = r.find((x: any) => x.error)?.error;
@@ -478,7 +507,7 @@ function TaqseematPage() {
         <body>
           <div class="header">
             <h1>الشوره ماركت — سجل التقسيمات اليومية</h1>
-            <p>${periodText} — تاريخ الطباعة: ${todayDate}${carryoverNote ? ` — ${carryoverNote}` : ""}</p>
+          <p>${periodText} — تاريخ الطباعة: ${todayDate}${carryoverNote ? ` — ${carryoverNote}` : ""}</p>
           </div>
 
           <div class="stats-bar">
@@ -510,6 +539,10 @@ function TaqseematPage() {
               <div class="stat-title">منصرف مبيعات</div>
               <div class="stat-val" style="color:#0284c7;">${EGP(salesExpTotal)}</div>
             </div>
+            <div class="stat-box">
+              <div class="stat-title">مبالغ خرج المضافة</div>
+              <div class="stat-val">${EGP(outgoingTotal)}</div>
+            </div>
           </div>
 
           <table>
@@ -537,6 +570,7 @@ function TaqseematPage() {
                 <td style="color:#16a34a;">${EGP(profitTotal)}</td>
                 <td style="color:#d97706;">${EGP(cigExpTotal)}</td>
                 <td style="color:#0284c7;">${EGP(salesExpTotal)}</td>
+                <td>${outgoingTotal > 0 ? EGP(outgoingTotal) : "—"}</td>
               </tr>
             </tfoot>
           </table>
@@ -691,6 +725,7 @@ function TaqseematPage() {
                 <th className="px-4 py-3 text-right font-bold">الأرباح</th>
                 <th className="px-4 py-3 text-right font-bold">منصرف سجاير</th>
                 <th className="px-4 py-3 text-right font-bold">منصرف مبيعات</th>
+                <th className="px-4 py-3 text-right font-bold">ملاحظة / مبلغ خرج</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -751,12 +786,28 @@ function TaqseematPage() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 min-w-40">
-                      <div className="flex items-center gap-2">
-                        {dayNote ? <span className="inline-flex rounded-full bg-warning/20 px-2 py-1 text-xs font-bold text-warning-foreground">{dayNote}</span> : <span className="text-muted-foreground">—</span>}
-                        <button onClick={() => editDayNote(d)} className="text-primary hover:opacity-70 no-print" aria-label="تعديل ملاحظة اليوم"><Pencil className="size-3.5" /></button>
-                      </div>
-                      {outgoingAmount > 0 && <div className="mt-1 text-xs font-semibold text-warning-foreground">مبلغ خرج: {EGP(outgoingAmount)}</div>}
+                    <td className="px-4 py-3 min-w-48">
+                      {(() => {
+                        const draft = getDayNoteDraft(d);
+                        return <div className="flex min-w-44 flex-col gap-2">
+                          <select
+                            value={draft.kind}
+                            onChange={(event) => updateDayNoteDraft(d, { kind: event.target.value as "" | "خرج" | "ملاحظة" })}
+                            className="h-9 rounded-lg border border-input bg-background px-2 text-xs no-print"
+                            aria-label={`ملاحظة يوم ${DATE_AR(d)}`}
+                          >
+                            <option value="">بدون ملاحظة</option>
+                            <option value="خرج">خرج</option>
+                            <option value="ملاحظة">ملاحظة أخرى</option>
+                          </select>
+                          {draft.kind === "ملاحظة" && <input value={draft.text} onChange={(event) => updateDayNoteDraft(d, { text: event.target.value })} placeholder="اكتب الملاحظة" className="h-9 rounded-lg border border-input bg-background px-2 text-xs no-print" />}
+                          {draft.kind === "خرج" && <label className="flex items-center gap-1 text-xs">المبلغ
+                            <input type="number" min="0" value={draft.outgoingAmount} onChange={(event) => updateDayNoteDraft(d, { outgoingAmount: event.target.value })} className="h-9 min-w-0 w-24 rounded-lg border border-input bg-background px-2 text-xs no-print" aria-label={`مبلغ خرج يوم ${DATE_AR(d)}`} />
+                          </label>}
+                          {dayNote && <span className="inline-flex w-fit rounded-full bg-warning/20 px-2 py-1 text-xs font-bold text-warning-foreground print-note">{dayNote}{outgoingAmount > 0 ? ` — ${EGP(outgoingAmount)}` : ""}</span>}
+                          <button onClick={() => saveDayNote(d)} className="flex w-fit items-center gap-1 rounded-md bg-primary px-2 py-1 text-xs font-bold text-primary-foreground no-print"><Save className="size-3" /> حفظ الملاحظة</button>
+                        </div>;
+                      })()}
                     </td>
                   </tr>
                 );
@@ -772,6 +823,7 @@ function TaqseematPage() {
                   <td className="px-4 py-3 text-success">{EGP(profitTotal)}</td>
                   <td className="px-4 py-3">{EGP(cigExpTotal)}</td>
                   <td className="px-4 py-3">{EGP(salesExpTotal)}</td>
+                  <td className="px-4 py-3">{EGP(outgoingTotal)}</td>
                 </tr>
               </tfoot>
             )}

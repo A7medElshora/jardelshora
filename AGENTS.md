@@ -10,3 +10,5 @@
 <!-- LOVABLE:END -->
 
 - Daily inventory cards and consumer columns share sale-date keys; after moving a day, refresh sales and display the destination week so quantities and totals stay synchronized without changing stock.
+- Store per-day تقسيمات notes and manual «خرج» adjustments alongside the existing date-unique taqseemat profit record, since it already represents each ledger day.
+- Keep ledger balance arithmetic in a pure helper with a focused regression test so manual «خرج» additions remain included in the displayed balance.

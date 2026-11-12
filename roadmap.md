@@ -1,2 +1,3 @@
 - [x] Synchronize moved daily cards with all consumer-column values and destination week.
+- [ ] Add per-day notes and manual «خرج» amounts to the تقسيمات ledger.
 - [ ] Redesign the dashboard after visual direction selection.
